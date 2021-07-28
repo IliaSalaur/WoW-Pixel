@@ -500,6 +500,7 @@ class Text : public IEffect
 private:
     String text;
     uint16_t _speed = 0;
+    uint16_t _runX = 0;
 
     CRGB _letCol = CRGB(0xffffff), _backCol = CRGB(0x0);
 
@@ -519,9 +520,14 @@ private:
 
     void _drawText()
     {
+        for(int i = 0; i < mW * mH; i++)
+        {
+            _leds[i] = CRGB(0); 
+        }
+
         for(int i = 0; i < text.length(); i++)
         {
-            _drawLetter(text.charAt(i), i * 5 + i, 0);
+            _drawLetter(text.charAt(i), i * 5 + i + _runX, 0);
         }
     }
 
@@ -541,13 +547,15 @@ public:
         if(millis() - timer >= _speed)
         {
             timer = millis();
-            this->_drawText();
+            _runX = (-(--_runX) >= text.lenght()) ? text.length() + text.length() / 2 : _runX;            
         }
+        this->_drawText();
     }
 
     void setText(String t)
     {
         text = t;
+        text += "   ";
     }
 
     void setSpeed(uint16_t speed) // 0 - 1000, рекомендую от 5 до 15
