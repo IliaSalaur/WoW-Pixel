@@ -538,13 +538,13 @@ public:
         _w = w;
         _h = h;
         text = t;
-        this->setSpeed(speed);        
+        this->setSpeed(speed);
     }
 
     void show() override
     {
         static uint32_t timer = 0;
-        if(millis() - timer >= _speed)
+        if(millis() - timer >= _speed && _speed != 0)
         {
             timer = millis();
             _runX = (-(--_runX) >= text.length()) ? text.length() + text.length() / 2 : _runX;            
