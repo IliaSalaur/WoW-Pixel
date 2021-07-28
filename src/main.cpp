@@ -5,7 +5,10 @@
 #include <GParser.h>
 #include <bitmap.h>
 
-SimpleLED<16, 16> matrix(D4);
+int efNumb = 0;
+uint32_t efChangeTimer = 0;
+
+SimpleLED<16, 16, D4> matrix;
 void setup() {
   randomSeed(micros());
   Serial.begin(115200);
@@ -18,17 +21,15 @@ void setup() {
 }
 
 void loop() {
-  if(Serial.available())
+  if(millis() - efChangeTimer >= 15000)
   {
-    int i = Serial.parseInt();
-    if(i > 9)
+    efChangeTimer = millis();
+    if(efNumb >= 9)
     {
-      matrix.drawText(String("kek"), 0);
+      matrix.drawText("lol kek", 7);
     }
-    else{
-    matrix.setEffect(EffectsName(i));
-    }
-    while(Serial.available()) Serial.read();
+    else matrix.setEffect(EffectsName(efNumb));
+    efNumb++;
   }
   matrix.handle();
 }

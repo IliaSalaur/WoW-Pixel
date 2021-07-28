@@ -10,7 +10,7 @@
 #include <Fonts.h>
 //#include <SimpleArray.h>
 
-template <uint8_t _width, uint8_t _height>
+template <uint8_t _width, uint8_t _height, int pin>
 class SimpleLED
 {
 private:
@@ -18,9 +18,9 @@ private:
     IEffect* _ef;
 public:
 
-    SimpleLED(int pin)
+    SimpleLED()
     {
-        FastLED.addLeds<WS2812B, D4, GRB>(_leds, _width * _height);
+        FastLED.addLeds<WS2812B, pin, GRB>(_leds, _width * _height);
         FastLED.setCorrection(LEDColorCorrection::TypicalLEDStrip); //pixelstring    
         FastLED.setBrightness(100);   
     }

@@ -21,7 +21,7 @@ uint32_t getHEX(CRGB col)
 enum EffectsName
 {
     CONFETTI,
-    OFF,
+    //OFF,
     FIRE,
     SNOWFALL,
     LIGHTERS,
@@ -568,11 +568,11 @@ public:
         case CONFETTI:
             efObj = new Confetti(leds, w, h);
             break;
-
+/*
         case OFF:
             efObj = new Off(leds, w, h);
             break;
-
+*/
         case FIRE:
             efObj = new Fire(leds, w, h);
             break;
