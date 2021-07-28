@@ -520,7 +520,7 @@ private:
 
     void _drawText()
     {
-        for(int i = 0; i < mW * mH; i++)
+        for(int i = 0; i < _w * _h; i++)
         {
             _leds[i] = CRGB(0); 
         }
@@ -547,7 +547,7 @@ public:
         if(millis() - timer >= _speed)
         {
             timer = millis();
-            _runX = (-(--_runX) >= text.lenght()) ? text.length() + text.length() / 2 : _runX;            
+            _runX = (-(--_runX) >= text.length()) ? text.length() + text.length() / 2 : _runX;            
         }
         this->_drawText();
     }
