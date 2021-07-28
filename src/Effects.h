@@ -6,6 +6,8 @@
 #include <EffectsConfig.h>
 #include <Fonts.h>
 
+int runX = 13;
+
 uint32_t getHEX(CRGB col)
 {
     uint32_t raw = 0;
@@ -500,7 +502,7 @@ class Text : public IEffect
 private:
     String text;
     uint16_t _speed = 0;
-    uint16_t _runX = 0;
+    int _runX = 0; // it was unsigned...
 
     CRGB _letCol = CRGB(0xffffff), _backCol = CRGB(0x0);
 
@@ -527,7 +529,7 @@ private:
 
         for(int i = 0; i < text.length(); i++)
         {
-            _drawLetter(text.charAt(i), i * 5 + i + _runX, 0);
+            _drawLetter(text.charAt(i), i * 5 + i + _runX, 1);
         }
     }
 
@@ -537,7 +539,7 @@ public:
         _leds = leds;
         _w = w;
         _h = h;
-        text = t;
+        this->setText(t);
         this->setSpeed(speed);
     }
 
@@ -547,15 +549,22 @@ public:
         if(millis() - timer >= _speed && _speed != 0)
         {
             timer = millis();
-            _runX = (-(--_runX) >= text.length()) ? text.length() + text.length() / 2 : _runX;            
-        }
-        this->_drawText();
+            //_runX = (_runX-- * -1 >= text.length() * 5) ? text.length() + text.length() / 2 : _runX;            
+            _runX--;
+            if(_runX <= text.length() * -5)
+            {
+                _runX = runX;
+            }
+            
+        }   
+        this->_drawText();     
     }
 
     void setText(String t)
     {
         text = t;
-        text += "   ";
+        text += String("   ");
+        Serial.println(text.length());
     }
 
     void setSpeed(uint16_t speed) // 0 - 1000, рекомендую от 5 до 15
