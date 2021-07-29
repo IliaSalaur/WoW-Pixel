@@ -8,15 +8,13 @@
 int efNumb = 0;
 uint32_t efChangeTimer = 0;
 
-bool handle = 0;
-
-SimpleLED<16, 8, D4> matrix;
+SimpleLED<8, 8, D4> matrix;
 void setup() {
   randomSeed(micros());
   Serial.begin(115200);
   Serial.setTimeout(20);
   //random16_add_entropy(ESP.getChipId());
-  
+  delay(500);
   matrix.begin();
   matrix.drawText(String("Lol kek"), 20, -1, CRGB(random(0xffffff)), CRGB(0));
   //matrix.setEffect(ef);
