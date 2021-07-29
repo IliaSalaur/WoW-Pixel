@@ -9,6 +9,9 @@
 #include <Effects.h>
 #include <Fonts.h>
 //#include <SimpleArray.h>
+#include <VirtualMatrix.h>
+
+#define DEBUG_MATRIX
 
 template <uint8_t _width, uint8_t _height, int pin>
 class SimpleLED
@@ -66,7 +69,13 @@ public:
         if(_ef) 
         {
             _ef->show();
+            #ifdef DEBUG_MATRIX
+            emulateLeds(_width, _height, _leds);
+            #else
+            #error Virtual matrix active, switch it off
             FastLED.show();
+            #endif
+            
         }
     }
 
@@ -78,11 +87,16 @@ public:
         this->clear();
     }
 
+    void setEffect(IEffect * ef)
+    {
+        _ef = ef;
+    }
+
     template<uint8_t _bitmapW, uint8_t _bitmapH>
     void drawBitmap(CRGB bitmap[_bitmapW][_bitmapH], uint8_t s_x, uint8_t s_y)
     {
         this->clear();
-        //CRGB (*bitmap)[w][h] = (CRGB (*)[w][h]) pBitmap;//Кастим void* к CRGB *b[][]. Очень костыльный костыль который толком не завелся, так что юзаем template и не паримся
+        //CRGB (*bitmap)[w][h] = (CRGB (*)[w][h]) pBitmap;//Кастим void* к CRGB *b[][]. Очень костыльный костыль который толком не завелся, так что юзаем template и не паримся. Вообще хотел использовать SimpleArray но, не сегодня 
         for(int x = 0; x < _bitmapW; x++)
         {
             for(int y = 0; y < _bitmapH; y++)
@@ -94,9 +108,9 @@ public:
         _ef = nullptr;
     }
 
-    void drawText(String text, uint16_t speed)
+    void drawText(String text, uint16_t speed, int scrollTimes = 0, CRGB lcol = CRGB(0xffffff), CRGB bcol = CRGB(0))
     {
-        _ef = new Text(_leds, _width, _height, speed, text);
+        _ef = new Text(_leds, _width, _height, speed, scrollTimes, text, lcol, bcol);
     }
 };
 

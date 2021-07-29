@@ -1,22 +1,10 @@
 #ifndef MYEFFECTS_H
 #define MYEFFECTS_H
 #include <FastLED.h>
-#include <XY_Func.h>
+#include <MatrixUtils.h>>
 #include <SimpleArray.h>
 #include <EffectsConfig.h>
 #include <Fonts.h>
-
-uint32_t getHEX(CRGB col)
-{
-    uint32_t raw = 0;
-    raw = col.r;
-    raw <<= 8;
-    raw |= col.g;
-    raw <<= 8;
-    raw |= col.b;
-
-    return raw;
-}
 
 enum EffectsName
 {
@@ -348,7 +336,7 @@ private:
       for (int x = 0; x < _w; x++) {
         // заполняем случайно верхнюю строку
         CRGB thisColor = _leds[XY(_w, _h, x, 0)];
-        //println(binary(thisColor.getHEX()));
+        //println(binary(thisColor.getHEX())); -- кусок кода с Processing
         if (getHEX(thisColor) == 0)
         {
           //println("Hex 0");
@@ -500,7 +488,9 @@ class Text : public IEffect
 private:
     String text;
     uint16_t _speed = 0;
-    uint16_t _runX = 0;
+    int _runX = 0;
+    int _scrollCount = 0;
+    int _scrollTimes = 0;
 
     CRGB _letCol = CRGB(0xffffff), _backCol = CRGB(0x0);
 
@@ -527,40 +517,102 @@ private:
 
         for(int i = 0; i < text.length(); i++)
         {
-            _drawLetter(text.charAt(i), i * 5 + i + _runX, 0);
+            _drawLetter(text.charAt(i), i * 5 + i + _runX, 1);
         }
     }
 
 public:
-    Text(CRGB* leds, uint8_t w, uint8_t h, uint16_t speed = 0, String t = "")
+    Text(CRGB* leds, uint8_t w, uint8_t h, uint16_t speed = 0, int scrollTimes = 0, String t = "", CRGB lcol = CRGB(0xffffff), CRGB bcol = CRGB(0))
     {
         _leds = leds;
         _w = w;
         _h = h;
-        text = t;
+        _letCol = lcol;
+        _backCol = bcol;
+        _scrollTimes = scrollTimes;
+        this->setText(t);
         this->setSpeed(speed);
     }
 
     void show() override
     {
         static uint32_t timer = 0;
-        if(millis() - timer >= _speed && _speed != 0)
+        static uint32_t frameTimer = 0; 
+        /*
+        21:34: Честно я понятия не имею почему этот баг возникает. 
+        В Processing все работает четко хотя код оттуда я просто взял и ctrl+c ctrl+v.
+        Но, в процесинг все это дело выполнялось 51 раз в секунду, здесь в 1000 раз быстрее (наверное)
+        Так что добавляем фреймТаймер и молимся (несмотря на то что я атеист, лол)
+
+        22:28:Не сработало 
+
+
+        Итак, сейчас 2 часа ночи и я фиксанул этот еб*** баг. 
+        Почему на Java все было нормально понятно не только лишь всем, лол.
+        Как я это сделал и в чем заключался баг: Проблема была в том что если это условие
+        (_runX-- * -1 >= text.length() * 5) ? text.length() + text.length() / 2 : _runX;
+        было true то больше оно нигокда не становилось false, и по этому оно дальше не крутилось.
+        Пофиксил немного изменив условие (_runX <= int(text.length() * -5)) ? _w : _runX - 1;
+        В таком виде оно после true дает false (я гений епт, ну реально)
+        И в этом была проблема. Вообще у програмистов часто такое бывает. 
+        Мой рекорд - 5 часов на поиск одного неправильного символа. И это сейчас я весь такой прокачаный, 
+        сразу знаю из-за чего что-то не работает, (о том что проблема была в формуле я понял на середине нашего тестирования) 
+        а тогда то я вообще масленком был, я уже чуть ли не плакал пока искал ту ошибку. Но зато, когда 
+        фиксишь тот самый баг испытаваешь огромный прилив дофамина, окситоцина, серотонина и прочих гормонов которые
+        стимулируют центр удовольствия в мозге. Уот так уот.
+        
+        */
+        if(millis() - frameTimer >= 20)
         {
-            timer = millis();
-            _runX = (-(--_runX) >= text.length()) ? text.length() + text.length() / 2 : _runX;            
+            frameTimer = millis();
+            if(_scrollTimes != 0 && _scrollTimes != _scrollCount)
+            {
+                if(millis() - timer >= _speed && _speed != 0)
+                {
+                    timer = millis();
+                    //_runX = (_runX-- * -1 >= text.length() * 5) ? text.length() + text.length() / 2 : _runX;
+                    //_runX = (_runX <= int(text.length() * -5)) ? _w : _runX - 1; // --- это фикс
+                    if(_runX <= int(text.length() * -5))
+                    {                        
+                        _runX = _w;
+                        _scrollCount++;
+                    }
+                    else
+                    {
+                        _runX = _runX - 1;
+                    }
+
+                }
+            }                        
+            this->_drawText();
         }
-        this->_drawText();
     }
 
     void setText(String t)
     {
         text = t;
-        text += "   ";
+        text += String("   ");
     }
 
     void setSpeed(uint16_t speed) // 0 - 1000, рекомендую от 5 до 15
     {
         _speed = (speed == 0) ? 0 : 1000/speed;
+        //_speed = speed;
+    }
+
+    void setLetterColor(CRGB lcol)
+    {
+        _letCol = lcol;
+    }
+
+    void setBackgroundColor(CRGB bcol)
+    {
+        _backCol = bcol;
+    }
+
+    void setScrollTimes(int n)
+    {
+        _scrollTimes = n;
     }
 };
 
@@ -607,10 +659,6 @@ public:
 
         case RAINBOW_V:
             efObj = new RainbowVertical(leds, w, h);
-            break;
-
-        case TEXT:
-            efObj = new Text(leds, w, h, 0U, String(""));
             break;
         }
         return efObj;

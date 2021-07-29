@@ -44,6 +44,18 @@
 
 #include <Arduino.h>
 
+uint32_t getHEX(CRGB col)
+{
+    uint32_t raw = 0;
+    raw = col.r;
+    raw <<= 8;
+    raw |= col.g;
+    raw <<= 8;
+    raw |= col.b;
+
+    return raw;
+}
+
 uint8_t XY (uint8_t _w, uint8_t _h, uint8_t x, uint8_t y)
 {
     if(x < _w && y < _h)
