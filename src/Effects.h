@@ -1,7 +1,7 @@
 #ifndef MYEFFECTS_H
 #define MYEFFECTS_H
 #include <FastLED.h>
-#include <MatrixUtils.h>>
+#include <MatrixUtils.h>
 #include <SimpleArray.h>
 #include <EffectsConfig.h>
 #include <Fonts.h>
@@ -197,12 +197,18 @@ public:
         _w = w;
         _h = h;
         line = SimpleArrayBuilder<uint8_t>(w).build();
-        matrixValue = Simple2dArrayBuilder<uint8_t>(w, h).build();
+        matrixValue = Simple2dArrayBuilder<uint8_t>().build(_w, _h);
     }
 
     void show()
     {
         this->fireRoutine();
+    }
+
+    ~Fire()
+    {
+        delete[] matrixValue;
+        delete[] line;
     }
 };
 
@@ -220,7 +226,7 @@ private:
         }
       }
 
-      for (byte x = 0; x < _w; x++) {
+      for (uint8_t x = 0; x < _w; x++) {
         // заполняем случайно верхнюю строку
         // а также не даём двум блокам по вертикали вместе быть
         if (getHEX(_leds[XY(_w, _h, x, _h - 2)]) == 0 && (random(0, _scale) == 0))
@@ -255,7 +261,7 @@ private:
     int lightersPos[2][LIGHTERS_AM];
     int8_t lightersSpeed[2][LIGHTERS_AM];
     CHSV lightersColor[LIGHTERS_AM];
-    byte loopCounter;
+    uint8_t loopCounter;
 
     int angle[LIGHTERS_AM];
     int speedV[LIGHTERS_AM];
@@ -269,7 +275,7 @@ private:
       if (_loadingFlag == true) {
         _loadingFlag = false;
         randomSeed(millis());
-        for (byte i = 0; i < LIGHTERS_AM; i++) {
+        for (uint8_t i = 0; i < LIGHTERS_AM; i++) {
           lightersPos[0][i] = random(0, _w * 10);
           lightersPos[1][i] = random(0, _h * 10);
           lightersSpeed[0][i] = random(-10, 10);
@@ -279,7 +285,7 @@ private:
       }
       //FastLED.clear();
       if (++loopCounter > 20) loopCounter = 0;
-      for (byte i = 0; i < _scale; i++) {
+      for (uint8_t i = 0; i < _scale; i++) {
         if (loopCounter == 0) {     // меняем скорость каждые 255 отрисовок
           lightersSpeed[0][i] += random(-3, 4);
           lightersSpeed[1][i] += random(-3, 4);
@@ -392,9 +398,9 @@ private:
 
     void rainbowVertical() {
         hue += 2;
-        for (byte j = 0; j < _h; j++) {
+        for (uint8_t j = 0; j < _h; j++) {
             CHSV thisColor = CHSV(hue + j * _scale, 255, 255);
-            for (byte i = 0; i < _w; i++){
+            for (uint8_t i = 0; i < _w; i++){
                 _leds[XY(_w, _h, i, j)] = thisColor;
             }
         }
@@ -426,9 +432,9 @@ private:
 
     void rainbowHorizontal() {
         hue += 2;
-        for (byte i = 0; i < _w; i++) {
+        for (uint8_t i = 0; i < _w; i++) {
             CHSV thisColor = CHSV((hue + i * _scale), 255, 255);
-            for (byte j = 0; j < _h; j++){
+            for (uint8_t j = 0; j < _h; j++){
                 _leds[XY(_w, _h, i, j)] = thisColor;   //leds[getPixelNumber(i, j)] = thisColor;
             }
         }
@@ -613,6 +619,11 @@ public:
     void setScrollTimes(int n)
     {
         _scrollTimes = n;
+    }
+
+    ~Text()
+    {
+        text.~String();
     }
 };
 

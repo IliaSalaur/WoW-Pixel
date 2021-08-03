@@ -12,6 +12,7 @@
 #include <VirtualMatrix.h>
 
 #define DEBUG_MATRIX
+#define ASYNC_MODE
 
 template <uint8_t _width, uint8_t _height, int pin>
 class SimpleLED
@@ -49,34 +50,31 @@ public:
         if(n < _width * _height)
         {
             _leds[n] = color;
+            #ifndef ASYNC_MODE
             FastLED.show();
+            #endif
         }
         _ef = nullptr;
     }
 
     void drawPixelXY(int x, int y, CRGB color)
     {
-        if(x * y < _width * _height)
-        {
-            _leds[XY(_width, _height, x, y)] = color;
-            FastLED.show();
-        }
-        _ef = nullptr;
+        this->drawPixel(XY(_width, _height, x, y), color);
     }
 
     void handle()
     {
         if(_ef) 
         {
-            _ef->show();
-            #ifdef DEBUG_MATRIX
-            emulateLeds(_width, _height, _leds);
-            #else
-            #error Virtual matrix active, switch it off
-            FastLED.show();
-            #endif
-            
+            _ef->show();                    
         }
+        #ifdef DEBUG_MATRIX
+            emulateLeds(_width, _height, _leds);
+            //#error Virtual matrix active, switch it off
+        #else
+            
+            FastLED.show();
+        #endif
     }
 
     void setEffect(EffectsName ef)

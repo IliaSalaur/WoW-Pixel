@@ -26,5 +26,8 @@
 //Colors
 #define COLORS_SHOW_PERIOD 50
 
+//Text
+#define TEXT_SPEED 10
+
 
 #endif

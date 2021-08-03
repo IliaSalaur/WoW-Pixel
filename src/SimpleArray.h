@@ -28,28 +28,32 @@ public:
 };
 
 template<typename T>
-class Simple2dArrayBuilder // То что творится в этом классе лучше никогда не видеть, поймут это только тру с кодеры
+class Simple2dArrayBuilder // То что творится в этом классе лучше никогда не видеть, поймут это только тру C кодеры
 {
 private:
-    T **_arr;
 
 public:
-    Simple2dArrayBuilder(size_t _w, size_t _h)
+    Simple2dArrayBuilder(){}
+
+    T** build(size_t _w, size_t _h)
     {
+        T** _arr;
         _arr = (T**)malloc(_w * sizeof(T*));
 
         for(int d2 = 0; d2 < _h; d2++)
         {
             _arr[d2] = (T*)malloc(_h * sizeof(T));
         }
-        
-    }
-
-    T** build()
-    {
-        Serial.println("3dArray builded");
+        Serial.println("2dArray builded");
         return _arr;
     }
+
+    void stop(T** arr)
+    {
+        delete arr;
+    }
+
+
 };
 
 template<typename T>
