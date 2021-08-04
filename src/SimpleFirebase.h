@@ -114,7 +114,12 @@ private:
         for(PathCallback pc : _pathcalls) 
             {
                 //if(pc.path == data.dataPath())
-                if(data.path.indexOf(pc.path) != -1)
+                if(pc.path.indexOf(data.path) != -1)
+                {
+                    if(pc.funcptr)  pc.funcptr(data);
+                    break;
+                }
+                else if(data.path.indexOf(pc.path) != -1)
                 {
                     if(pc.funcptr)  pc.funcptr(data);
                     break;
@@ -160,8 +165,7 @@ private:
 
                         Заменил PushData на PathData (тоже самое но без dataType) потому что iteratorGet возврощал не тип даных (строка, инт) а какой-от бред бесполезный
                     */
-                    DEBUG(type)
-                    DEBUG(key)
+                    DEBUG(commonPath + key)
                     DEBUG(value)
                 }
                 else 
@@ -169,6 +173,48 @@ private:
                     commonPath = String("/");
                     commonPath += key;
                     commonPath += String("/");
+                    DEBUG("Array")
+                    DEBUG(commonPath + key)
+                    DEBUG(value)
+                }
+            }
+            json->iteratorEnd();
+        }
+    }
+
+    void _parseJson(FirebaseJson* json)
+    {
+        //SimpleJSON js(data->stringData());
+        String commonPath;
+        if(1)
+        {           
+            for(int i = 0; i < json->iteratorBegin(); i++)
+            {
+                String key, value;
+                int type = 0;
+
+                json->iteratorGet(i, type, key, value);
+
+                if(value.indexOf("{") == -1) 
+                {
+                    _handleCallbacks(PathData(commonPath + key, value)); //PushData's datatype should be int instead of string. But to be honest, this library is a piece of shit, really. I would rewrite it if i had time
+                    // data->dataTypeEnum returns uint8_t but should return Enum. And it's just one example, i had a "little bit" more
+                    /*
+                        По этому если честно надо либо написать свою библиотеку, либо переписать это дело на TCP но тогда нужно будет перерыть всё мобильное приложение (если оно написано с использованием ФП)
+
+                        Заменил PushData на PathData (тоже самое но без dataType) потому что iteratorGet 'return не тип даных (строка, инт) а какой-от бред бесполезный
+                    */
+                    DEBUG(commonPath + key)
+                    DEBUG(value)
+                }
+                else 
+                {
+                    commonPath = String("/");
+                    commonPath += key;
+                    commonPath += String("/");
+                    //DEBUG("Array")
+                    //DEBUG(commonPath)
+                    //DEBUG(value)
                 }
             }
             json->iteratorEnd();
@@ -186,8 +232,8 @@ public:
         pSingletonInstance = this;        
         Firebase.begin(config, auth);
         Firebase.reconnectWiFi(true);
-        _fbdo.setBSSLBufferSize(2048, 2048);
-        _fbdo.setResponseSize(2048);
+        _fbdo.setBSSLBufferSize(4096, 4096);//2048, 2048
+        _fbdo.setResponseSize(4096);//2048
         if (!Firebase.beginStream(_fbdo, "/WowPixelMini/IlyaTtest"))
         {
           //Serial.println("------------------------------------");
@@ -213,6 +259,22 @@ public:
     {
         _handleQuery();
     }
+    /*
+    void get(String path)
+    {
+        DEBUG("Getting JSON")
+        //Firebase.getJSON(_fbdo, path);
+        if(!Firebase.get(_fbdo, path))
+        {
+            DEBUG(_fbdo.errorReason())
+        }
+
+        DEBUG("Getting json from _fbdo")
+        FirebaseJson *json = _fbdo.jsonObjectPtr();
+        
+        DEBUG("Start parsing")
+        this->_parseJson(json);
+    }*/
 };
 
 SimpleFirebase * SimpleFirebase::pSingletonInstance = 0;

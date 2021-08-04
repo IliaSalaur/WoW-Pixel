@@ -23,33 +23,45 @@ FirebaseConfig config;
 
 SimpleFirebase fb;
 SimpleLED<8, 8, D4> matrix;
+CRGB leds[64];
 
-void efCallback(PathData data)
+String text = "";
+int scrollN = 0;
+
+void caseCallback(PathData data)
 {
-  DEBUG("Ef callback called")
-  DEBUG(String("Ef is ") + String(data.data.toInt()))
+  int caseNum = data.data.toInt();
+  switch(caseNum)
+  {
+  case 0:
+    for(int i = 0; i < 64; i++)
+    {
+      matrix.drawPixel(i, leds[i]);
+    }
+    break;
 
-  matrix.setEffect(EffectsName(data.data.toInt() - 10));
+  case 1:
+    matrix.drawText(text, TEXT_SPEED, scrollN);
+    break;
+
+  default:
+    matrix.setEffect(EffectsName((caseNum <= 17 && caseNum >=10) ? caseNum - 10 : 10));
+    break;
+  }
 }
 
 void textCallback(PathData data)
+{  
+  DEBUG("Text callback called")   
+  text = data.data;
+  DEBUG(text) 
+}
+
+void scrollCallback(PathData data)
 {
-  static String text = "";
-  static int scrollN = 0;
-
-  DEBUG("Text callback called")
-  if(data.path.indexOf("Scroll") != -1)
-  {
-    scrollN = data.data.toInt();
-    DEBUG(scrollN) 
-  }
-  else
-  {    
-    text = data.data;
-    DEBUG(text)
-  }
-
-  matrix.drawText(text, TEXT_SPEED, scrollN);
+  DEBUG("Scroll callback called")
+  scrollN = data.data.toInt();
+  DEBUG(scrollN)
 }
 
 void drawCallback(PathData data)
@@ -58,7 +70,8 @@ void drawCallback(PathData data)
   uint32_t colHex = strtoul(data.data.substring(1).c_str(), NULL, 16);
 
   matrix.drawPixel(ledNum, CRGB(colHex));
-  DEBUG(String(ledNum) + String(" ") + String(colHex))
+  leds[ledNum] = CRGB(colHex);
+  DEBUG(String("DrawCallback: ") + String(ledNum) + String(" ") + String(colHex))
 }
 
 void setup()
@@ -89,13 +102,14 @@ void setup()
   config.token_status_callback = tokenStatusCallback; 
 
   fb.on(String("/Matrix/"), drawCallback);
-  fb.on(String("/Case/Case"), efCallback);
-  fb.on(String("/Control/Text/"), textCallback);
+  fb.on(String("/Case/Case"), caseCallback);
+  fb.on(String("/Control/Text/Text"), textCallback);
+  fb.on(String("/Control/Text/Scroll"), scrollCallback);
 
   fb.begin(&config, &auth);
   matrix.begin();
 
-  delay(3000);
+  //delay(3000);
 }
 
 void loop()

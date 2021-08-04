@@ -196,7 +196,7 @@ public:
         _leds_num = w * h;
         _w = w;
         _h = h;
-        line = SimpleArrayBuilder<uint8_t>(w).build();
+        line = SimpleArrayBuilder<uint8_t>::build(w);
         matrixValue = Simple2dArrayBuilder<uint8_t>().build(_w, _h);
     }
 
@@ -207,8 +207,8 @@ public:
 
     ~Fire()
     {
-        delete[] matrixValue;
-        delete[] line;
+        Simple2dArrayBuilder<uint8_t>::stop(matrixValue, _w, _h);
+        SimpleArrayBuilder<uint8_t>::stop(line, _w);
     }
 };
 

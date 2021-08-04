@@ -12,18 +12,19 @@ template<typename T>
 class SimpleArrayBuilder
 {
 private:
-    T *_arr;
 
 public:
-    SimpleArrayBuilder(size_t size)
-    {
+    static T* build(size_t size)
+    { 
+        T* _arr;
         _arr = (T*) malloc(size * sizeof(T));
+        //Serial.println("Array builded");
+        return _arr;
     }
 
-    T* build()
+    static void stop(T* _arr, size_t size)
     {
-        Serial.println("Array builded");
-        return _arr;
+        free(_arr);
     }
 };
 
@@ -34,8 +35,8 @@ private:
 
 public:
     Simple2dArrayBuilder(){}
-
-    T** build(size_t _w, size_t _h)
+    
+    static T** build(size_t _w, size_t _h)
     {
         T** _arr;
         _arr = (T**)malloc(_w * sizeof(T*));
@@ -44,27 +45,32 @@ public:
         {
             _arr[d2] = (T*)malloc(_h * sizeof(T));
         }
-        Serial.println("2dArray builded");
+        ////Serial.println("2dArray builded");
         return _arr;
     }
-
-    void stop(T** arr)
+    //template<typename T>
+    static void stop(T** arr, size_t _w, size_t _h)
     {
-        delete arr;
+        for(int d2 = 0; d2 < _h; d2++)
+        {
+            free(arr[d2]);
+        }
+        free(arr);
     }
-
-
 };
 
 template<typename T>
 class Simple3dArrayBuilder // То что творится в этом классе лучше никогда не видеть, поймут это только тру с кодеры
 {
 private:
-    T ***_arr;
 
 public:
-    Simple3dArrayBuilder(size_t _w, size_t _h, size_t _d)
+    Simple3dArrayBuilder(){}
+
+    static T*** build(size_t _w, size_t _h, size_t _d)
     {
+        T ***_arr;
+        //Serial.println("3dArray builded");
         _arr = (T***)malloc(_w * sizeof(T**));
         for(int d1 = 0; d1 < _w; d1++)
         {
@@ -74,12 +80,20 @@ public:
                 _arr[d1][d2] = (T*)malloc(_d * sizeof(T));
             }
         }
+        return _arr;
     }
 
-    T*** build()
+    static void stop(T*** _arr, size_t w, size_t h, size_t d)
     {
-        Serial.println("3dArray builded");
-        return _arr;
+        for(int d1 = 0; d1 < w; d1++)
+        {                        
+            for(int d2 = 0; d2 < h; d2++)
+            {
+                free(_arr[d1][d2]);
+            }
+            free(_arr[d1]);
+        }
+        free(_arr);
     }
 };
 
