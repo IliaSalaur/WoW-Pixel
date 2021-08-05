@@ -181,9 +181,9 @@ private:
             json->iteratorEnd();
         }
     }
-    void _parseJson(StreamData data)
+    void _parseJson(StreamData* data)
     {
-        FirebaseJson* json = data.jsonObjectPtr();
+        FirebaseJson* json = data->jsonObjectPtr();
         String commonPath;
         if(1)
         {           
