@@ -587,7 +587,6 @@ public:
                     {
                         _runX = _runX - 1;
                     }
-
                 }
             }                        
             this->_drawText();
