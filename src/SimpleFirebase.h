@@ -184,7 +184,8 @@ private:
     void _parseJson(StreamData* data)
     {
         FirebaseJson* json = data->jsonObjectPtr();
-        String commonPath;
+        String commonPath = data->dataPath();
+        commonPath += String("/");
         if(1)
         {           
             for(int i = 0; i < json->iteratorBegin(); i++)
@@ -222,6 +223,8 @@ private:
                     commonPath += key;
                     commonPath += String("/");
                 }
+                DEBUG(commonPath + key)
+                DEBUG(value)
                 _handleCallbacks(PathData(commonPath + key, value));
             }
             json->iteratorEnd();

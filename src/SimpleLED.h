@@ -11,7 +11,7 @@
 //#include <SimpleArray.h>
 #include <VirtualMatrix.h>
 
-//#define DEBUG_MATRIX
+#define DEBUG_MATRIX
 #define ASYNC_MODE
 
 template <uint8_t _width, uint8_t _height, int pin>
