@@ -32,7 +32,7 @@ public:
     void begin()
     {
         FastLED.clear();
-        delay(1500);
+        delay(200);
         FastLED.show();
     }
 
@@ -80,9 +80,11 @@ public:
     void setEffect(EffectsName ef)
     {
         //_ef = EffectFactory::getEffect(ef, _leds, 8, 8);
+        FastLED.clear();
+        this->clear();
         _ef = EffectFactory::getEffect(ef, _leds, _width, _height);//       Старая версия с использованием Enum и EffectFactory
         //_ef = ef;
-        this->clear();
+        
     }
 
     void setEffect(IEffect * ef)

@@ -5,7 +5,7 @@
 #include <GParser.h>
 #include <bitmap.h>
 #include <SimpleFirebase.h>
-#include <WiFiManager.h>
+//#include <WiFiManager.h>
 #include "addons/TokenHelper.h"
 #include "addons/RTDBHelper.h"
 
