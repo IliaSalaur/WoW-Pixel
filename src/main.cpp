@@ -51,6 +51,11 @@ void caseCallback(PathData data)
   }
 }
 
+void brightnessCallback(PathData data)
+{
+  FastLED.setBrightness(data.data.toInt());
+}
+
 void textCallback(PathData data)
 {  
   DEBUG("Text callback called")   
@@ -103,9 +108,11 @@ void setup()
   config.token_status_callback = tokenStatusCallback; 
 
   fb.on(String("/Matrix/"), drawCallback);
-  fb.on(String("/Case/Case"), caseCallback);
   fb.on(String("/Control/Text/Text"), textCallback);
   fb.on(String("/Control/Text/Scroll"), scrollCallback);
+  fb.on(String("/Case/Case"), caseCallback);
+  fb.on(String("/Control/Brig"), brightnessCallback);
+
 
   fb.begin(&config, &auth);
   matrix.begin();

@@ -193,16 +193,16 @@ private:
                 int type = 0;
 
                 json->iteratorGet(i, type, key, value);
-
-                if(value.indexOf("{") == -1) 
+/*
+                if(value.indexOf("{") != -1) 
                 {
                     _handleCallbacks(PathData(commonPath + key, value)); //PushData's datatype should be int instead of string. But to be honest, this library is a piece of shit, really. I would rewrite it if i had time
                     // data->dataTypeEnum returns uint8_t but should return Enum. And it's just one example, i had a "little bit" more
-                    /*
-                        По этому если честно надо либо написать свою библиотеку, либо переписать это дело на TCP но тогда нужно будет перерыть всё мобильное приложение (если оно написано с использованием ФП)
-
-                        Заменил PushData на PathData (тоже самое но без dataType) потому что iteratorGet 'return не тип даных (строка, инт) а какой-от бред бесполезный
-                    */
+                    //
+                    //   По этому если честно надо либо написать свою библиотеку, либо переписать это дело на TCP но тогда нужно будет перерыть всё мобильное приложение (если оно написано с использованием ФП)
+                    //
+                    //    Заменил PushData на PathData (тоже самое но без dataType) потому что iteratorGet 'return не тип даных (строка, инт) а какой-от бред бесполезный
+                    
                     DEBUG(commonPath + key)
                     DEBUG(value)
                 }
@@ -215,6 +215,14 @@ private:
                     //DEBUG(commonPath)
                     //DEBUG(value)
                 }
+*/
+                if(value.indexOf("{") != -1)
+                {
+                    commonPath = data->dataPath();
+                    commonPath += key;
+                    commonPath += String("/");
+                }
+                _handleCallbacks(PathData(commonPath + key, value));
             }
             json->iteratorEnd();
         }
