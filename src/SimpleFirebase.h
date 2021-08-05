@@ -142,13 +142,13 @@ private:
         }
     }
 
-    void _parseJson(StreamData* data)
+
+    void _parseJson(FirebaseJson* json)
     {
         //SimpleJSON js(data->stringData());
         String commonPath;
-        if(data->dataType() == "json")
-        {
-            FirebaseJson *json = data->jsonObjectPtr();            
+        if(1)
+        {           
             for(int i = 0; i < json->iteratorBegin(); i++)
             {
                 String key, value;
@@ -163,7 +163,7 @@ private:
                     /*
                         По этому если честно надо либо написать свою библиотеку, либо переписать это дело на TCP но тогда нужно будет перерыть всё мобильное приложение (если оно написано с использованием ФП)
 
-                        Заменил PushData на PathData (тоже самое но без dataType) потому что iteratorGet возврощал не тип даных (строка, инт) а какой-от бред бесполезный
+                        Заменил PushData на PathData (тоже самое но без dataType) потому что iteratorGet 'return не тип даных (строка, инт) а какой-от бред бесполезный
                     */
                     DEBUG(commonPath + key)
                     DEBUG(value)
@@ -173,18 +173,17 @@ private:
                     commonPath = String("/");
                     commonPath += key;
                     commonPath += String("/");
-                    DEBUG("Array")
-                    DEBUG(commonPath + key)
-                    DEBUG(value)
+                    //DEBUG("Array")
+                    //DEBUG(commonPath)
+                    //DEBUG(value)
                 }
             }
             json->iteratorEnd();
         }
     }
-
-    void _parseJson(FirebaseJson* json)
+    void _parseJson(StreamData data)
     {
-        //SimpleJSON js(data->stringData());
+        FirebaseJson* json = data.jsonObjectPtr();
         String commonPath;
         if(1)
         {           
