@@ -4,60 +4,67 @@
 #define EFFECTS_NUM 2
 
 #define EMULATE8x8
+int delInt = 0;
 
-#include <FastLED.h>
+#include <Adafruit_NeoPixel.h>
 #include <Effects.h>
 #include <Fonts.h>
-//#include <SimpleArray.h>
 #include <VirtualMatrix.h>
 
-#define DEBUG_MATRIX
+//#define DEBUG_MATRIX
 #define ASYNC_MODE
 
 template <uint8_t _width, uint8_t _height, int pin>
 class SimpleLED
 {
 private:
-    CRGB _leds[_width * _height];
+    uint32_t _leds[_width * _height];
     IEffect* _ef;
+    Adafruit_NeoPixel *_matrix;
+
+    void _setPixels()
+    {
+        for(int i = 0; i < _width * _height; i++)
+        {
+            _matrix->setPixelColor(i, _leds[i]);
+        }
+    }
 public:
 
     SimpleLED()
     {
-        FastLED.addLeds<WS2812B, pin, GRB>(_leds, _width * _height);
-        FastLED.setCorrection(LEDColorCorrection::TypicalLEDStrip); //pixelstring    
-        FastLED.setBrightness(100);   
+        _matrix = new Adafruit_NeoPixel(_width * _height, pin, NEO_GRB + NEO_KHZ800);
     }
 
     void begin()
     {
-        FastLED.clear();
-        delay(200);
-        FastLED.show();
+        _matrix->begin();
+        _matrix->clear();
     }
 
     void clear()
     {
-        FastLED.clear();
+        _matrix->clear();
         for(uint16_t i = 0; i < _width * _height; i++)
         {
-            _leds[i] = CRGB(0);
+            _leds[i] = 0;
         }
     }
 
-    void drawPixel(int n, CRGB color)
+    void drawPixel(int n, uint32_t color)
     {
         if(n < _width * _height)
         {
             _leds[n] = color;
+            _matrix->setPixelColor(n, color);
             #ifndef ASYNC_MODE
-            FastLED.show();
+            _matrix->show();
             #endif
         }
         _ef = nullptr;
     }
 
-    void drawPixelXY(int x, int y, CRGB color)
+    void drawPixelXY(int x, int y, uint32_t color)
     {
         this->drawPixel(XY(_width, _height, x, y), color);
     }
@@ -68,19 +75,20 @@ public:
         {
             _ef->show();                    
         }
+            this->_setPixels();
         #ifdef DEBUG_MATRIX
             emulateLeds(_width, _height, _leds);
             //#error Virtual matrix active, switch it off
         #else
-            
-            FastLED.show();
+            //_matrix.show();
+            _matrix->show();
         #endif
     }
 
     void setEffect(EffectsName ef)
     {
         //_ef = EffectFactory::getEffect(ef, _leds, 8, 8);
-        FastLED.clear();
+        _matrix->clear();
         this->clear();
         _ef = EffectFactory::getEffect(ef, _leds, _width, _height);//       Старая версия с использованием Enum и EffectFactory
         //_ef = ef;
@@ -93,10 +101,9 @@ public:
     }
 
     template<uint8_t _bitmapW, uint8_t _bitmapH>
-    void drawBitmap(CRGB bitmap[_bitmapW][_bitmapH], uint8_t s_x, uint8_t s_y)
+    void drawBitmap(uint32_t bitmap[_bitmapW][_bitmapH], uint8_t s_x, uint8_t s_y)
     {
         this->clear();
-        //CRGB (*bitmap)[w][h] = (CRGB (*)[w][h]) pBitmap;//Кастим void* к CRGB *b[][]. Очень костыльный костыль который толком не завелся, так что юзаем template и не паримся. Вообще хотел использовать SimpleArray но, не сегодня 
         for(int x = 0; x < _bitmapW; x++)
         {
             for(int y = 0; y < _bitmapH; y++)
@@ -104,11 +111,16 @@ public:
                 _leds[XY(_width, _height, x + s_x, y + s_y)] = bitmap[x][y];
             }
         } 
-        FastLED.show();
+        _matrix->show();
         _ef = nullptr;
     }
 
-    void drawText(String text, uint16_t speed, int scrollTimes = 0, CRGB lcol = CRGB(0xffffff), CRGB bcol = CRGB(0))
+    void setBrightness(uint8_t brig)
+    {
+        _matrix->setBrightness(brig);
+    }
+
+    void drawText(String text, uint16_t speed, int scrollTimes = 0, uint32_t lcol = 0xffffff, uint32_t bcol = 0)
     {
         _ef = new Text(_leds, _width, _height, speed, scrollTimes, text, lcol, bcol);
     }

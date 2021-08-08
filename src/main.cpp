@@ -1,3 +1,6 @@
+#define FASTLED_ESP8266_RAW_PIN_ORDER
+#define FASTLED_ALLOW_INTERRUPTS 0
+
 #include <Arduino.h>
 #include <SimpleLED.h>
 #include <ESP8266WiFi.h>
@@ -9,8 +12,8 @@
 #include "addons/TokenHelper.h"
 #include "addons/RTDBHelper.h"
 
-#define WIFI_SSID "Mi Phone"
-#define WIFI_PASSWORD "treleleelee"
+#define WIFI_SSID "hinev1"
+#define WIFI_PASSWORD "069052345"
 
 #define API_KEY "AIzaSyCiMqSEMR44_G3LngmUJpW_8cs7DxQiyzo"
 
@@ -24,7 +27,7 @@ FirebaseConfig config;
 
 SimpleFirebase fb;
 SimpleLED<8, 8, D4> matrix;
-CRGB leds[64];
+uint32_t leds[64];
 
 String text = "";
 int scrollN = 0;
@@ -46,14 +49,14 @@ void caseCallback(PathData data)
     break;
 
   default:
-    matrix.setEffect(EffectsName((caseNum <= 17 && caseNum >=10) ? caseNum - 10 : 10));
+    matrix.setEffect(EffectsName((caseNum <= 17 && caseNum >=10) ? caseNum - 10 : 0));
     break;
   }
 }
 
 void brightnessCallback(PathData data)
 {
-  FastLED.setBrightness(data.data.toInt());
+  matrix.setBrightness(data.data.toInt());
 }
 
 void textCallback(PathData data)
@@ -75,10 +78,11 @@ void drawCallback(PathData data)
   int ledNum = data.path.substring(11).toInt();
   uint32_t colHex = strtoul(data.data.substring(1).c_str(), NULL, 16);
 
-  matrix.drawPixel(ledNum, CRGB(colHex));
-  leds[ledNum] = CRGB(colHex);
+  matrix.drawPixel(ledNum, colHex);
+  leds[ledNum] = colHex;
   DEBUG(String("DrawCallback: ") + String(ledNum) + String(" ") + String(colHex))
 }
+
 
 void setup()
 {
@@ -124,4 +128,13 @@ void loop()
 {
   fb.handle();
   matrix.handle();
+  if(Serial.available())
+  {
+    delInt = Serial.parseInt();
+    while (Serial.available())
+    {
+      Serial.read();
+    }
+    
+  }
 }

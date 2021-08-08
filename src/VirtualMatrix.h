@@ -1,13 +1,12 @@
 #ifndef VIRTUAL_MATRIX_H
 #define VIRTUAL_MATRIX_H
 #include <Arduino.h>
-#include <FastLED.h>
 #include <MatrixUtils.h>
 
 #define EMLEDS_PERIOD 70
 #define USE_EMLEDS_TIMER 1
 
-void emulateLeds(uint8_t w, uint8_t h, CRGB* leds)
+void emulateLeds(uint8_t w, uint8_t h, uint32_t* leds)
 {
     static uint32_t timer = 0;
 

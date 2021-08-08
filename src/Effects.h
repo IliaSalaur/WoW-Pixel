@@ -1,10 +1,12 @@
 #ifndef MYEFFECTS_H
 #define MYEFFECTS_H
-#include <FastLED.h>
+#include <Adafruit_NeoPixel.h>
 #include <MatrixUtils.h>
 #include <SimpleArray.h>
 #include <EffectsConfig.h>
 #include <Fonts.h>
+
+//#define CRGB
 
 enum EffectsName
 {
@@ -23,10 +25,12 @@ enum EffectsName
 class IEffect
 {
 protected:
-    CRGB *_leds;
+    uint32_t *_leds;
     uint16_t _leds_num;
     uint8_t _w = 0;
     uint8_t _h = 0;
+
+    Adafruit_NeoPixel colUtils;
 public:
     virtual void show() = 0;
 };
@@ -36,7 +40,7 @@ class Confetti : public IEffect
 private:
     uint32_t _timer = 0;
 public:
-    Confetti(CRGB *leds, uint8_t w, uint8_t h)
+    Confetti(uint32_t *leds, uint8_t w, uint8_t h)
     {
         _leds = leds;
         _leds_num = w * h;
@@ -51,7 +55,7 @@ public:
             _timer = millis();
             for(int a = 0; a < _leds_num; a++)
             {
-                *(_leds + a) = CRGB(random(255), random(255), random(255));            
+                *(_leds + a) = getHEX(random(255), random(255), random(255));            
             }
         }
     }
@@ -60,7 +64,7 @@ public:
 class Off : public IEffect
 {
 public:
-    Off(CRGB *leds, uint8_t w, uint8_t h)
+    Off(uint32_t *leds, uint8_t w, uint8_t h)
     {
         _leds = leds;
         _leds_num = w * h;
@@ -72,7 +76,7 @@ public:
     {
         for (int i = 0; i < _leds_num; i++)
         {
-            *(_leds + i) = CRGB::Black;
+            *(_leds + i) = 0;
         }
         
     }
@@ -124,7 +128,7 @@ private:
                     + pcnt * matrixValue[y + 1][newX]) / 100)
                     - valueMask[y][newX];
 
-                    CRGB col = CHSV(
+                    uint32_t col = getHSV(
                         int(_hueStart * 2.5 + hueMask[y][newX]), // H
                         255, // S
                     (int)max(0, nextv) // V
@@ -139,7 +143,7 @@ private:
         for (int x = 0; x < _w; x++) {
             int newX = x;
             if (x > _w - 1) newX = x - (_w - 1);
-            CRGB col = CHSV(
+            uint32_t col = getHSV(
                 int(_hueStart * 2.5 + hueMask[7][newX]), // H
                 255, // S
                 (int)(((100 - pcnt) * matrixValue[_h - 1][newX] + pcnt * line[newX]) / 100) // V
@@ -190,7 +194,7 @@ private:
 
 
 public:
-    Fire(CRGB* leds, uint8_t w, uint8_t h)
+    Fire(uint32_t* leds, uint8_t w, uint8_t h)
     {
         _leds = leds;
         _leds_num = w * h;
@@ -230,14 +234,14 @@ private:
         // заполняем случайно верхнюю строку
         // а также не даём двум блокам по вертикали вместе быть
         if (getHEX(_leds[XY(_w, _h, x, _h - 2)]) == 0 && (random(0, _scale) == 0))
-          _leds[XY(_w, _h, x, testf)] = CRGB(14745599 - 1052688 * random(0, 4));
+          _leds[XY(_w, _h, x, testf)] = getHEX(14745599 - 1052688 * random(0, 4));
         else
-          _leds[XY(_w, _h, x, testf)] = CRGB(0);
+          _leds[XY(_w, _h, x, testf)] = getHEX(0);
       }
     }
 
 public:
-    SnowFall(CRGB* leds, uint8_t w, uint8_t h)
+    SnowFall(uint32_t* leds, uint8_t w, uint8_t h)
     {
         _w = w;
         _h = h;
@@ -260,7 +264,7 @@ class Lighters : public IEffect
 private:
     int lightersPos[2][LIGHTERS_AM];
     int8_t lightersSpeed[2][LIGHTERS_AM];
-    CHSV lightersColor[LIGHTERS_AM];
+    uint32_t lightersColor[LIGHTERS_AM];
     uint8_t loopCounter;
 
     int angle[LIGHTERS_AM];
@@ -280,7 +284,7 @@ private:
           lightersPos[1][i] = random(0, _h * 10);
           lightersSpeed[0][i] = random(-10, 10);
           lightersSpeed[1][i] = random(-10, 10);
-          lightersColor[i] = CHSV(random(0, 255), 255, 255);
+          lightersColor[i] = getHSV(random(0, 255), 255, 255);
         }
       }
       //FastLED.clear();
@@ -312,7 +316,7 @@ private:
     }  
 
 public:
-    Lighters(CRGB* leds, uint8_t w, uint8_t h)
+    Lighters(uint32_t* leds, uint8_t w, uint8_t h)
     {
         _leds = leds;
         _w = w;
@@ -341,26 +345,26 @@ private:
     {
       for (int x = 0; x < _w; x++) {
         // заполняем случайно верхнюю строку
-        CRGB thisColor = _leds[XY(_w, _h, x, 0)];
+        uint32_t thisColor = _leds[XY(_w, _h, x, 0)];
         //println(binary(thisColor.getHEX())); -- кусок кода с Processing
-        if (getHEX(thisColor) == 0)
+        if (thisColor == 0)
         {
           //println("Hex 0");
           if (int(random(-1, _scale)) == 0)
           {
-            _leds[XY(_w, _h, x, 0)] = CRGB(65280);
+            _leds[XY(_w, _h, x, 0)] = 65280;
           } else
           {
-            _leds[XY(_w, _h, x, 0)] = CRGB(0);
+            _leds[XY(_w, _h, x, 0)] = 0;
           }
-        } else if (getHEX(thisColor) < 8192)
+        } else if (thisColor < 8192)
         {
           //println("Hex < 8192");
-          _leds[XY(_w, _h, x, 0)] = CRGB(0);
+          _leds[XY(_w, _h, x, 0)] = 0;
         } else
         {
           //println("else");
-          _leds[XY(_w, _h, x, 0)] = CRGB(getHEX(thisColor) - 8192);
+          _leds[XY(_w, _h, x, 0)] = thisColor - 8192;
         }
       }
 
@@ -372,7 +376,7 @@ private:
       }
     }
 public:
-    Matrix(CRGB* leds, uint8_t w, uint8_t h)
+    Matrix(uint32_t* leds, uint8_t w, uint8_t h)
     {
         _leds = leds;
         _w = w;
@@ -399,14 +403,14 @@ private:
     void rainbowVertical() {
         hue += 2;
         for (uint8_t j = 0; j < _h; j++) {
-            CHSV thisColor = CHSV(hue + j * _scale, 255, 255);
+            uint32_t thisColor = getHSV(hue + j * _scale, 255, 255);
             for (uint8_t i = 0; i < _w; i++){
                 _leds[XY(_w, _h, i, j)] = thisColor;
             }
         }
     }
 public:
-    RainbowVertical(CRGB* leds, uint8_t w, uint8_t h)
+    RainbowVertical(uint32_t* leds, uint8_t w, uint8_t h)
     {
         _leds = leds;
         _w = w;
@@ -433,14 +437,14 @@ private:
     void rainbowHorizontal() {
         hue += 2;
         for (uint8_t i = 0; i < _w; i++) {
-            CHSV thisColor = CHSV((hue + i * _scale), 255, 255);
+            uint32_t thisColor = getHSV((hue + i * _scale), 255, 255);
             for (uint8_t j = 0; j < _h; j++){
                 _leds[XY(_w, _h, i, j)] = thisColor;   //leds[getPixelNumber(i, j)] = thisColor;
             }
         }
     }
 public:
-    RainbowHorizontal(CRGB* leds, uint8_t w, uint8_t h)
+    RainbowHorizontal(uint32_t* leds, uint8_t w, uint8_t h)
     {
         _leds = leds;
         _w = w;
@@ -467,11 +471,11 @@ private:
     void colorsRoutine() {
         hue += _scale;
         for (int i = 0; i < _w * _h; i++) {
-        _leds[i] = CHSV(hue, 255, 255);
+        _leds[i] = getHSV(hue, 255, 255);
     }
 }
 public:
-    Colors(CRGB* leds, uint8_t w, uint8_t h)
+    Colors(uint32_t* leds, uint8_t w, uint8_t h)
     {
         _leds = leds;
         _w = w;
@@ -498,7 +502,7 @@ private:
     int _scrollCount = 0;
     int _scrollTimes = 0;
 
-    CRGB _letCol = CRGB(0xffffff), _backCol = CRGB(0x0);
+    uint32_t _letCol = 0xffffff, _backCol = 0;
 
     int x, y;
 
@@ -518,7 +522,7 @@ private:
     {
         for(int i = 0; i < _w * _h; i++)
         {
-            _leds[i] = CRGB(0); 
+            _leds[i] = 0;
         }
 
         for(int i = 0; i < text.length(); i++)
@@ -528,7 +532,7 @@ private:
     }
 
 public:
-    Text(CRGB* leds, uint8_t w, uint8_t h, uint16_t speed = 0, int scrollTimes = 0, String t = "", CRGB lcol = CRGB(0xffffff), CRGB bcol = CRGB(0))
+    Text(uint32_t* leds, uint8_t w, uint8_t h, uint16_t speed = 0, int scrollTimes = 0, String t = "", uint32_t lcol = uint32_t(0xffffff), uint32_t bcol = uint32_t(0))
     {
         _leds = leds;
         _w = w;
@@ -605,12 +609,12 @@ public:
         //_speed = speed;
     }
 
-    void setLetterColor(CRGB lcol)
+    void setLetterColor(uint32_t lcol)
     {
         _letCol = lcol;
     }
 
-    void setBackgroundColor(CRGB bcol)
+    void setBackgroundColor(uint32_t bcol)
     {
         _backCol = bcol;
     }
@@ -630,7 +634,7 @@ class EffectFactory
 {
 public:
     EffectFactory(){}
-    static IEffect *getEffect(EffectsName ef, CRGB *leds, const uint8_t w, const uint8_t h)
+    static IEffect *getEffect(EffectsName ef, uint32_t *leds, const uint8_t w, const uint8_t h)
     {
         IEffect *efObj;
         switch(ef)
