@@ -1,6 +1,3 @@
-#define FASTLED_ESP8266_RAW_PIN_ORDER
-#define FASTLED_ALLOW_INTERRUPTS 0
-
 #include <Arduino.h>
 #include <SimpleLED.h>
 #include <ESP8266WiFi.h>
@@ -31,6 +28,8 @@ uint32_t leds[64];
 
 String text = "";
 int scrollN = 0;
+uint32_t textCol = 0xffffff;
+uint32_t backCol = 0x0;
 
 void caseCallback(PathData data)
 {
@@ -45,7 +44,7 @@ void caseCallback(PathData data)
     break;
 
   case 1:
-    matrix.drawText(text, TEXT_SPEED, scrollN);
+    matrix.drawText(text, TEXT_SPEED, scrollN, textCol, backCol);
     break;
 
   default:
@@ -83,6 +82,17 @@ void drawCallback(PathData data)
   DEBUG(String("DrawCallback: ") + String(ledNum) + String(" ") + String(colHex))
 }
 
+void textColCallback(PathData data)
+{
+  textCol = strtoul(data.data.substring(1).c_str(), NULL, 16);
+  DEBUG("Text color changed");
+}
+
+void backColCallback(PathData data)
+{
+  backCol = strtoul(data.data.substring(1).c_str(), NULL, 16);
+  DEBUG("Back color changed");
+}
 
 void setup()
 {
@@ -116,6 +126,8 @@ void setup()
   fb.on(String("/Control/Text/Scroll"), scrollCallback);
   fb.on(String("/Case/Case"), caseCallback);
   fb.on(String("/Control/Brig"), brightnessCallback);
+  fb.on(String("/Control/Text/Color"), textColCallback);
+  fb.on(String("/Control/Text/BackColor"), backColCallback);
 
 
   fb.begin(&config, &auth);
