@@ -31,9 +31,11 @@ int scrollN = 0;
 uint32_t textCol = 0xffffff;
 uint32_t backCol = 0x0;
 
+int caseNum = 0;
+
 void caseCallback(PathData data)
 {
-  int caseNum = data.data.toInt();
+  caseNum = data.data.toInt();
   switch(caseNum)
   {
   case 0:
@@ -77,7 +79,8 @@ void drawCallback(PathData data)
   int ledNum = data.path.substring(11).toInt();
   uint32_t colHex = strtoul(data.data.substring(1).c_str(), NULL, 16);
 
-  matrix.drawPixel(ledNum, colHex);
+  if(caseNum == 0) matrix.drawPixel(ledNum, colHex);
+  
   leds[ledNum] = colHex;
   DEBUG(String("DrawCallback: ") + String(ledNum) + String(" ") + String(colHex))
 }
