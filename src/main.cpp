@@ -1,35 +1,22 @@
 #include <Arduino.h>
+#include <SimpleFirebase.h>
 #include <SimpleLED.h>
 #include <ESP8266WiFi.h>
-#include <FirebaseESP8266.h>
 #include <GParser.h>
 #include <bitmap.h>
-#include <SimpleFirebase.h>
 //#include <WiFiManager.h>
 #include "addons/TokenHelper.h"
 #include "addons/RTDBHelper.h"
-
-#define WIFI_SSID "hinev1"
-#define WIFI_PASSWORD "069052345"
-
-#define API_KEY "AIzaSyCiMqSEMR44_G3LngmUJpW_8cs7DxQiyzo"
-
-#define DATABASE_URL "https://wowpixel-test1-default-rtdb.firebaseio.com/" //<databaseName>.firebaseio.com or <databaseName>.<region>.firebasedatabase.app
-
-#define USER_EMAIL "salaur.ilie@gmail.com"
-#define USER_PASSWORD "12345678"
+#include "Config.h"
 
 FirebaseAuth auth;
 FirebaseConfig config;
 
 SimpleFirebase fb;
-SimpleLED<8, 8, D4> matrix;
+SimpleLED<16, 8, D4> matrix;
 uint32_t leds[64];
 
-String text = "";
-int scrollN = 0;
-uint32_t textCol = 0xffffff;
-uint32_t backCol = 0x0;
+Text text;
 
 int caseNum = 0;
 
@@ -46,7 +33,7 @@ void caseCallback(PathData data)
     break;
 
   case 1:
-    matrix.drawText(text, TEXT_SPEED, scrollN, textCol, backCol);
+    matrix.setEffect(&text);
     break;
 
   default:
@@ -63,15 +50,15 @@ void brightnessCallback(PathData data)
 void textCallback(PathData data)
 {  
   DEBUG("Text callback called")   
-  text = data.data;
-  DEBUG(text) 
+  text.setText(data.data);
+  DEBUG(data.data) 
 }
 
 void scrollCallback(PathData data)
 {
   DEBUG("Scroll callback called")
-  scrollN = data.data.toInt();
-  DEBUG(scrollN)
+  text.setScrollTimes(data.data.toInt());
+  DEBUG(data.data.toInt())
 }
 
 void drawCallback(PathData data)
@@ -87,13 +74,13 @@ void drawCallback(PathData data)
 
 void textColCallback(PathData data)
 {
-  textCol = strtoul(data.data.substring(1).c_str(), NULL, 16);
+  text.setLetterColor(strtoul(data.data.substring(1).c_str(), NULL, 16));
   DEBUG("Text color changed");
 }
 
 void backColCallback(PathData data)
 {
-  backCol = strtoul(data.data.substring(1).c_str(), NULL, 16);
+  text.setBackgroundColor(strtoul(data.data.substring(1).c_str(), NULL, 16));
   DEBUG("Back color changed");
 }
 
@@ -143,13 +130,4 @@ void loop()
 {
   fb.handle();
   matrix.handle();
-  if(Serial.available())
-  {
-    delInt = Serial.parseInt();
-    while (Serial.available())
-    {
-      Serial.read();
-    }
-    
-  }
 }

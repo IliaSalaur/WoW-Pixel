@@ -41,7 +41,7 @@ public:
         T** _arr;
         _arr = (T**)malloc(_w * sizeof(T*));
 
-        for(int d2 = 0; d2 < _h; d2++)
+        for(size_t d2 = 0; d2 < _h; d2++)
         {
             _arr[d2] = (T*)malloc(_h * sizeof(T));
         }
@@ -51,7 +51,7 @@ public:
     //template<typename T>
     static void stop(T** arr, size_t _w, size_t _h)
     {
-        for(int d2 = 0; d2 < _h; d2++)
+        for(size_t d2 = 0; d2 < _h; d2++)
         {
             free(arr[d2]);
         }

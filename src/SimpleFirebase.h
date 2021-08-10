@@ -149,7 +149,7 @@ private:
         String commonPath;
         if(1)
         {           
-            for(int i = 0; i < json->iteratorBegin(); i++)
+            for(size_t i = 0; i < json->iteratorBegin(); i++)
             {
                 String key, value;
                 int type = 0;
@@ -188,13 +188,13 @@ private:
         commonPath += String("/");
         if(1)
         {           
-            for(int i = 0; i < json->iteratorBegin(); i++)
+            for(size_t i = 0; i < json->iteratorBegin(); i++)
             {
                 String key, value;
                 int type = 0;
 
                 json->iteratorGet(i, type, key, value);
-/*
+                /*
                 if(value.indexOf("{") != -1) 
                 {
                     _handleCallbacks(PathData(commonPath + key, value)); //PushData's datatype should be int instead of string. But to be honest, this library is a piece of shit, really. I would rewrite it if i had time

@@ -25,14 +25,25 @@ enum EffectsName
 class IEffect
 {
 protected:
-    uint32_t *_leds;
-    uint16_t _leds_num;
+    uint32_t *_leds = nullptr;
+    uint16_t _leds_num = 0;
     uint8_t _w = 0;
     uint8_t _h = 0;
 
     Adafruit_NeoPixel colUtils;
 public:
     virtual void show() = 0;
+
+    void setLeds(uint32_t * leds)
+    {
+        _leds = leds;
+    }
+
+    void setWH(uint8_t w, uint8_t h)
+    {
+        _w = w;
+        _h = h;
+    }
 };
 
 class Confetti : public IEffect
@@ -452,7 +463,7 @@ public:
     }
 
     void show()
-    {
+    {  
         static uint32_t timer = 0;
         if(millis() - timer >= RAINBOW_SHOW_PERIOD)
         {
@@ -497,7 +508,7 @@ class Text : public IEffect
 {
 private:
     String text;
-    uint16_t _speed = 0;
+    uint16_t _speed =  TEXT_SPEED;
     int _runX = 0;
     int _scrollCount = 0;
     int _scrollTimes = 0;
@@ -506,28 +517,77 @@ private:
 
     int x, y;
 
-    void _drawLetter(char c, int x, int y)
-    {
+    void _drawLetter(int c, int x, int y, int font)
+    {        
         int ic = c;
-        for(int a = ((x < 0) ? -x:0); a < 5; a++)
+        switch (font)
         {
-            for(int b = 0; b < 7; b++)
+        case 15:
+            //ic = (c >= 48 && c <= 57) ?  c - 48 : c;
+            for(int a = ((x < 0) ? -x:0); a < 3; a++)
             {
-            _leds[(XY(_w, _h, a + x, b + y))] = ((font5x7[ic * 5 + a] & (1 << b)) >> b == 1) ? _letCol : _backCol;
+                for(int b = 0; b < 5; b++)
+                {
+
+                    _leds[(XY(_w, _h, a + x, (5 - b) + y))] = ((font3x5Digits.getBytes(ic)[a] & (1 << b)) >> b == 1) ? _letCol : _backCol;                    
+                }
             }
-        }
+            break;
+        
+        case 35:
+            if(ic > 127)
+            {
+                for(int a = ((x < 0) ? -x:0); a < 5; a++)
+                {
+                    for(int b = 0; b < 7; b++)
+                    {
+                    _leds[(XY(_w, _h, a + x, b + y))] = ((font5x7Rus.getBytes(ic)[a] & (1 << b)) >> b == 1) ? _letCol : _backCol;
+                    }
+                }
+            }
+            else
+            {
+                for(int a = ((x < 0) ? -x:0); a < 5; a++)
+                {
+                    for(int b = 0; b < 7; b++)
+                    {
+                    _leds[(XY(_w, _h, a + x, b + y))] = ((font5x7.getBytes(ic)[a] & (1 << b)) >> b == 1) ? _letCol : _backCol;
+                    }
+                }
+            }            
+            break;
+        }        
     }
 
     void _drawText()
     {
         for(int i = 0; i < _w * _h; i++)
         {
-            _leds[i] = 0;
+            _leds[i] = _backCol;
         }
 
-        for(int i = 0; i < text.length(); i++)
+        if(int(text.charAt(0)) > 127)
+        {   
+            for(uint16_t i = 0; i < strlen(text.c_str()); i++)
+            {
+                int charIndex = text.charAt(i);
+                
+                if(charIndex > 127)
+                {
+                    charIndex <<= 8;
+                    charIndex |= text.charAt(++i);
+                }                
+                _drawLetter(charIndex, (i/2) * 5 + (i/2) + _runX, 1, (_w*_h == 64) ? 3*5 : 5*7);
+                DEBUG(i)
+
+            }
+        }
+        else
         {
-            _drawLetter(text.charAt(i), i * 5 + i + _runX, 1);
+            for(uint16_t i = 0; i < text.length(); i++)
+            {
+                _drawLetter(int(text.charAt(i)), i * 5 + i + _runX, 1, (_w*_h == 64) ? 3*5 : 5*7);
+            }
         }
     }
 
@@ -542,6 +602,11 @@ public:
         _scrollTimes = scrollTimes;
         this->setText(t);
         this->setSpeed(speed);
+    }
+
+    Text()
+    {
+
     }
 
     void show() override
@@ -600,13 +665,12 @@ public:
     void setText(String t)
     {
         text = t;
-        text += String("   ");
+        //text += String("   ");
     }
 
-    void setSpeed(uint16_t speed) // 0 - 1000, рекомендую от 5 до 15
+    void setSpeed(uint16_t speed) // 0 - 1000, рекомендую от 50 до 300
     {
-        _speed = (speed == 0) ? 0 : 1000/speed;
-        //_speed = speed;
+        _speed = speed;
     }
 
     void setLetterColor(uint32_t lcol)
@@ -621,6 +685,7 @@ public:
 
     void setScrollTimes(int n)
     {
+        _scrollCount = 0;
         _scrollTimes = n;
     }
 
@@ -636,46 +701,48 @@ public:
     EffectFactory(){}
     static IEffect *getEffect(EffectsName ef, uint32_t *leds, const uint8_t w, const uint8_t h)
     {
-        IEffect *efObj;
         switch(ef)
         {
         case CONFETTI:
-            efObj = new Confetti(leds, w, h);
+            return new Confetti(leds, w, h);
             break;
 /*
         case OFF:
-            efObj = new Off(leds, w, h);
+            return new Off(leds, w, h);
             break;
 */
         case FIRE:
-            efObj = new Fire(leds, w, h);
+            return new Fire(leds, w, h);
             break;
 
         case SNOWFALL:
-            efObj = new SnowFall(leds, w, h);
+            return new SnowFall(leds, w, h);
             break;
 
         case LIGHTERS:
-            efObj = new Lighters(leds, w, h);
+            return new Lighters(leds, w, h);
             break;
 
         case MATRIX:
-            efObj = new Matrix(leds, w, h);
+            return new Matrix(leds, w, h);
             break;
 
         case COLORS:
-            efObj = new Colors(leds, w, h);
+            return new Colors(leds, w, h);
             break;
 
         case RAINBOW_H:
-            efObj = new RainbowHorizontal(leds, w, h);
+            return new RainbowHorizontal(leds, w, h);
             break;
 
         case RAINBOW_V:
-            efObj = new RainbowVertical(leds, w, h);
+            return new RainbowVertical(leds, w, h);
+            break;
+
+        case TEXT:
+            return nullptr;
             break;
         }
-        return efObj;
     }
 };
 
