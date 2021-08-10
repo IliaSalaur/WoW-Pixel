@@ -541,7 +541,7 @@ private:
                 {
                     for(int b = 0; b < 7; b++)
                     {
-                    _leds[(XY(_w, _h, a + x, b + y))] = ((font5x7Rus.getBytes(ic)[a] & (1 << b)) >> b == 1) ? _letCol : _backCol;
+                        _leds[(XY(_w, _h, a + x, b + y))] = ((font5x7Rus.getBytes(ic)[a] & (1 << b)) >> b == 1) ? _letCol : _backCol;
                     }
                 }
             }
@@ -551,7 +551,7 @@ private:
                 {
                     for(int b = 0; b < 7; b++)
                     {
-                    _leds[(XY(_w, _h, a + x, b + y))] = ((font5x7.getBytes(ic)[a] & (1 << b)) >> b == 1) ? _letCol : _backCol;
+                        _leds[(XY(_w, _h, a + x, b + y))] = ((font5x7.getBytes(ic)[a] & (1 << b)) >> b == 1) ? _letCol : _backCol;
                     }
                 }
             }            
@@ -578,7 +578,6 @@ private:
                     charIndex |= text.charAt(++i);
                 }                
                 _drawLetter(charIndex, (i/2) * 5 + (i/2) + _runX, 1, (_w*_h == 64) ? 3*5 : 5*7);
-                DEBUG(i)
 
             }
         }
