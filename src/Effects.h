@@ -595,7 +595,7 @@ private:
         for(uint16_t i = 0, j = 0; i < len; i++, j++)
         {
             int charIndex = text.charAt(i);
-            if(charIndex != '\0')
+            if(1)
             {
                 bool rusChar = 0;
                 bool smallSpace = 0;
@@ -617,7 +617,7 @@ private:
                 //_drawLetter(charIndex, j * 5 + j + _runX, 1, (_w * _h == 64) ? 3*5 : 5*7);    //(i + 1 < len && (charIndex >= 48 && charIndex <= 57) && (text[i + 1] >= 48 && text[i + 1] <= 57))
                 //_drawLetter(charIndex, j * ((smallSpace) ? 1:5) + j + _runX, 1, (_w * _h == 64) ? 3*5 : 5*7);
                 _drawLetter(charIndex, lastX + _runX, _y, (_w * _h == 64) ? 3*5 : 5*7);
-                lastX += (smallSpace) ? 4:5;
+                lastX += (smallSpace) ? 4:6;
                 i += (rusChar) ? 1 : 0;
             }
         }
