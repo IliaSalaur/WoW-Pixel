@@ -5,7 +5,8 @@
 #include <Effects.h>
 #include <VirtualMatrix.h>
 
-#define DEBUG_MATRIX
+
+//#define DEBUG_CORRECTION
 #define ASYNC_MODE
 
 template <uint8_t _width, uint8_t _height, int pin>
@@ -34,6 +35,11 @@ public:
     {
         _matrix->begin();
         _matrix->clear();
+        #ifdef DEBUG_CORRECTION
+        DEBUG(_matrix->rOffset)
+        DEBUG(_matrix->gOffset)
+        DEBUG(_matrix->bOffset)
+        #endif
     }
 
     void clear()
@@ -72,10 +78,34 @@ public:
             this->_setPixels();
         #ifdef DEBUG_MATRIX
             emulateLeds(_width, _height, _leds);
-            //#error Virtual matrix active, switch it off
-        #else
-            //_matrix.show();
+            #warning Virtual matrix active, switch it off
+        #else            
+            //DEBUG("Adaf start")
             _matrix->show();
+            //DEBUG("Adaf stop")
+        #endif
+
+        #ifdef DEBUG_CORRECTION
+            if(Serial.available())
+            {
+                char c = Serial.read();
+                int i = Serial.parseInt();
+                switch (c)
+                {
+                case 'r':
+                    _matrix->rOffset = i;
+                    break;
+                
+                case 'g':
+                    _matrix->gOffset = i;
+                    break;
+
+                case 'b':
+                    _matrix->bOffset = i;
+                    break;
+                }
+            }
+            while(Serial.available()) Serial.read();
         #endif
     }
 

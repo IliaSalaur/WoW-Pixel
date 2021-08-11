@@ -14,10 +14,9 @@ class SimpleArrayBuilder
 private:
 
 public:
-    static T* build(size_t size)
+    static T* build(size_t size, T* _arr)
     { 
-        T* _arr;
-        _arr = (T*) malloc(size * sizeof(T));
+        _arr = (T*) realloc(_arr, size * sizeof(T));
         //Serial.println("Array builded");
         return _arr;
     }
@@ -25,6 +24,7 @@ public:
     static void stop(T* _arr, size_t size)
     {
         free(_arr);
+        DEBUG(ESP.getFreeHeap())
     }
 };
 
@@ -36,14 +36,13 @@ private:
 public:
     Simple2dArrayBuilder(){}
     
-    static T** build(size_t _w, size_t _h)
+    static T** build(size_t _w, size_t _h, T** _arr)
     {
-        T** _arr;
-        _arr = (T**)malloc(_w * sizeof(T*));
+        _arr = (T**)realloc(_arr, _w * sizeof(T*));
 
         for(size_t d2 = 0; d2 < _h; d2++)
         {
-            _arr[d2] = (T*)malloc(_h * sizeof(T));
+            _arr[d2] = (T*)realloc(_arr[d2], _h * sizeof(T));
         }
         ////Serial.println("2dArray builded");
         return _arr;
@@ -56,6 +55,7 @@ public:
             free(arr[d2]);
         }
         free(arr);
+        DEBUG(ESP.getFreeHeap())
     }
 };
 

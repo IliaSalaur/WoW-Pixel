@@ -109,11 +109,12 @@ uint32_t getHSV(int hue, int saturation, int value)
 
 uint8_t XY (uint8_t _w, uint8_t _h, uint8_t x, uint8_t y)
 {
-    if(x < _w && y < _h)
-    {
-        return ((y % 2 == 0) ? y * _w + _w - x - 1:(y * _w) + x);
-    }
-    //Serial.println("Out of bounds");
-    return (_h * _w - 1);
+  if(x < _w && y < _h)
+  {
+      return ((y % 2 == 0) ? y * _w + _w - x - 1:(y * _w) + x);
+  }
+  //Serial.println("Out of bounds");
+  //return (_h * _w - 1);
+  return 0;    
 }
 #endif

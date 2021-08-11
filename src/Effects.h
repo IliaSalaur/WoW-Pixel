@@ -1,8 +1,9 @@
 #ifndef MYEFFECTS_H
 #define MYEFFECTS_H
+
+//#include <ArduinoTrace.h>
 #include <Adafruit_NeoPixel.h>
 #include <MatrixUtils.h>
-#include <SimpleArray.h>
 #include <EffectsConfig.h>
 #include <Fonts.h>
 
@@ -22,15 +23,16 @@ enum EffectsName
     TEXT
 };
 
+ 
 class IEffect
 {
 protected:
     uint32_t *_leds = nullptr;
     uint16_t _leds_num = 0;
+
     uint8_t _w = 0;
     uint8_t _h = 0;
-
-    Adafruit_NeoPixel colUtils;
+    //Adafruit_NeoPixel colUtils;
 public:
     virtual void show() = 0;
 
@@ -46,7 +48,8 @@ public:
     }
 };
 
-class Confetti : public IEffect
+ 
+class Confetti : public IEffect  
 {
 private:
     uint32_t _timer = 0;
@@ -72,7 +75,8 @@ public:
     }
 };
 
-class Off : public IEffect
+ 
+class Off : public IEffect   
 {
 public:
     Off(uint32_t *leds, uint8_t w, uint8_t h)
@@ -92,17 +96,17 @@ public:
         
     }
 };
-
-class Fire : public IEffect
+ 
+class Fire : public IEffect   
 {
 private:
     
     int _pcnt = 0;
 
-    uint8_t _hueStart = 5;
+    uint8_t _hueStart = 2;
 
-    uint8_t **matrixValue;
-    uint8_t *line;
+    uint8_t matrixValue[8][16];
+    uint8_t line[16];
 
     int hueMask[8][16]  = {//8*16 
         {0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0 },
@@ -211,8 +215,11 @@ public:
         _leds_num = w * h;
         _w = w;
         _h = h;
-        line = SimpleArrayBuilder<uint8_t>::build(w);
-        matrixValue = Simple2dArrayBuilder<uint8_t>().build(_w, _h);
+
+        //line = SimpleArrayBuilder<uint8_t>::build(w);
+        //matrixValue = Simple2dArrayBuilder<uint8_t>().build(_h, _w);
+        //Simple2dArrayBuilder<uint8_t>::build(_h, _w, matrixValue);
+        //SimpleArrayBuilder<uint8_t>::build(_w, line);
     }
 
     void show()
@@ -222,12 +229,13 @@ public:
 
     ~Fire()
     {
-        Simple2dArrayBuilder<uint8_t>::stop(matrixValue, _w, _h);
-        SimpleArrayBuilder<uint8_t>::stop(line, _w);
+        //Simple2dArrayBuilder<uint8_t>::stop(matrixValue, _h, _w);
+        //SimpleArrayBuilder<uint8_t>::stop(line, _w);
     }
 };
 
-class SnowFall : public IEffect
+ 
+class SnowFall : public IEffect   
 {
 private:
     uint8_t _scale = 40;
@@ -270,7 +278,8 @@ public:
     }
 };
 
-class Lighters : public IEffect
+ 
+class Lighters : public IEffect   
 {
 private:
     int lightersPos[2][LIGHTERS_AM];
@@ -291,7 +300,7 @@ private:
         _loadingFlag = false;
         randomSeed(millis());
         for (uint8_t i = 0; i < LIGHTERS_AM; i++) {
-          lightersPos[0][i] = random(0, _w * 10);
+          lightersPos[0][i] = random(0, _w * ((_w / _h == 1) ? 10 : 5));//10  
           lightersPos[1][i] = random(0, _h * 10);
           lightersSpeed[0][i] = random(-10, 10);
           lightersSpeed[1][i] = random(-10, 10);
@@ -311,7 +320,7 @@ private:
         lightersPos[0][i] += lightersSpeed[0][i];
         lightersPos[1][i] += lightersSpeed[1][i];
 
-        if (lightersPos[0][i] < 0) lightersPos[0][i] = (_w - 1) * 10;
+        if (lightersPos[0][i] < 0) lightersPos[0][i] = (_w - 1) * ((_w / _h == 1) ? 10 : 5); //10
         if (lightersPos[0][i] >= _h * 10) lightersPos[0][i] = 0;
 
         if (lightersPos[1][i] < 0) {
@@ -319,10 +328,10 @@ private:
           lightersSpeed[1][i] = -lightersSpeed[1][i];
         }
         if (lightersPos[1][i] >= (_h - 1) * 10) {
-          lightersPos[1][i] = (_w - 1) * 10;
+          lightersPos[1][i] = (_w - 1) * ((_w / _h == 1) ? 10 : 5);//10
           lightersSpeed[1][i] = -lightersSpeed[1][i];
         }
-        _leds[XY(_w, _h, lightersPos[0][i] / 10, lightersPos[1][i] / 10)] =  lightersColor[i];
+        _leds[XY(_w, _h, lightersPos[0][i] / ((_w / _h == 1) ? 10 : 5)/*10*/, lightersPos[1][i] / 10)] =  lightersColor[i];
       }
     }  
 
@@ -346,8 +355,8 @@ public:
     }
 };
 
-
-class Matrix : public IEffect
+ 
+class Matrix : public IEffect   
 {
 private:
     uint8_t _scale = 40;
@@ -405,6 +414,7 @@ public:
     }
 };
 
+ 
 class RainbowVertical : public IEffect
 {
 private:
@@ -439,6 +449,7 @@ public:
     }
 };
 
+ 
 class RainbowHorizontal : public IEffect
 {
 private:
@@ -473,7 +484,8 @@ public:
     }
 };
 
-class Colors : public IEffect
+ 
+class Colors : public IEffect   
 {
 private:
     int hue = 0;
@@ -504,10 +516,11 @@ public:
     }
 };
 
-class Text : public IEffect
+ 
+class Text : public IEffect   
 {
 private:
-    String text;
+    String text = String(" ");
     uint16_t _speed =  TEXT_SPEED;
     int _runX = 0;
     int _scrollCount = 0;
@@ -515,7 +528,13 @@ private:
 
     uint32_t _letCol = 0xffffff, _backCol = 0;
 
-    int x, y;
+    void _setLeds(int x, int y, uint32_t col)
+    {
+        if(x < _w && y < _h)
+        {
+            _leds[XY(_w, _h, x, y)] = col;                  
+        }
+    }
 
     void _drawLetter(int c, int x, int y, int font)
     {        
@@ -528,20 +547,21 @@ private:
             {
                 for(int b = 0; b < 5; b++)
                 {
-
-                    _leds[(XY(_w, _h, a + x, (5 - b) + y))] = ((font3x5Digits.getBytes(ic)[a] & (1 << b)) >> b == 1) ? _letCol : _backCol;                    
+                    this->_setLeds(a + x, ((5 - b) + y),  ((font3x5Digits.getBytes(ic)[a] & (1 << b)) >> b == 1) ? _letCol : _backCol);
+                    //_leds[(XY(_w, _h, a + x, (5 - b) + y))] = ((font3x5Digits.getBytes(ic)[a] & (1 << b)) >> b == 1) ? _letCol : _backCol;                    
                 }
             }
             break;
         
         case 35:
-            if(ic > 127)
+            if(ic >= 208)
             {
                 for(int a = ((x < 0) ? -x:0); a < 5; a++)
                 {
                     for(int b = 0; b < 7; b++)
                     {
-                        _leds[(XY(_w, _h, a + x, b + y))] = ((font5x7Rus.getBytes(ic)[a] & (1 << b)) >> b == 1) ? _letCol : _backCol;
+                        //_leds[(XY(_w, _h, a + x, b + y))] = ((font5x7Rus.getBytes(ic)[a] & (1 << b)) >> b == 1) ? _letCol : _backCol;
+                        this->_setLeds(a + x, b + y,  ((font5x7Rus.getBytes(ic)[a] & (1 << b)) >> b == 1) ? _letCol : _backCol);
                     }
                 }
             }
@@ -551,7 +571,8 @@ private:
                 {
                     for(int b = 0; b < 7; b++)
                     {
-                        _leds[(XY(_w, _h, a + x, b + y))] = ((font5x7.getBytes(ic)[a] & (1 << b)) >> b == 1) ? _letCol : _backCol;
+                        //_leds[(XY(_w, _h, a + x, b + y))] = ((font5x7.getBytes(ic)[a] & (1 << b)) >> b == 1) ? _letCol : _backCol;
+                        this->_setLeds(a + x, b + y,  ((font5x7.getBytes(ic)[a] & (1 << b)) >> b == 1) ? _letCol : _backCol);
                     }
                 }
             }            
@@ -564,30 +585,32 @@ private:
         for(int i = 0; i < _w * _h; i++)
         {
             _leds[i] = _backCol;
-        }
+        }  
 
-        if(int(text.charAt(0)) > 127)
-        {   
-            for(uint16_t i = 0; i < strlen(text.c_str()); i++)
-            {
-                int charIndex = text.charAt(i);
-                
-                if(charIndex > 127)
-                {
-                    charIndex <<= 8;
-                    charIndex |= text.charAt(++i);
-                }                
-                _drawLetter(charIndex, (i/2) * 5 + (i/2) + _runX, 1, (_w*_h == 64) ? 3*5 : 5*7);
-
-            }
-        }
-        else
+        int len = strlen(text.c_str());
+        for(uint16_t i = 0, j = 0; i < len; i++, j++)
         {
-            for(uint16_t i = 0; i < text.length(); i++)
+            int charIndex = text.charAt(i);
+            bool rusChar = 0;
+            if(charIndex >= 208)
             {
-                _drawLetter(int(text.charAt(i)), i * 5 + i + _runX, 1, (_w*_h == 64) ? 3*5 : 5*7);
-            }
+                charIndex <<= 8;
+                charIndex |= text.charAt(i + 1);
+                rusChar = 1;
+            }                                                
+            
+            _drawLetter(charIndex, j * 5 + j + _runX, 1, (_w*_h == 64) ? 3*5 : 5*7);    
+            i += (rusChar) ? 1 : 0;
         }
+    }
+
+    void _centerText()
+    {
+        if(text != String(" ") && _scrollTimes == 0)
+        {
+            _runX = (_w - int(text.length()) * 5) / 2 - 1;
+        }
+        DEBUG(String("_runX setted: ") + String(_runX))
     }
 
 public:
@@ -605,7 +628,7 @@ public:
 
     Text()
     {
-
+        text = String(" ");
     }
 
     void show() override
@@ -642,19 +665,25 @@ public:
             if(_scrollTimes != 0 && _scrollTimes != _scrollCount)
             {
                 if(millis() - timer >= _speed && _speed != 0)
-                {
+                {DEBUG("MOVE start")
                     timer = millis();
                     //_runX = (_runX-- * -1 >= text.length() * 5) ? text.length() + text.length() / 2 : _runX;
                     //_runX = (_runX <= int(text.length() * -5)) ? _w : _runX - 1; // --- это фикс
-                    if(_runX <= int(text.length() * -5))
-                    {                        
+                    if(_runX <= int(text.length()) * -5)
+                    {
                         _runX = _w;
                         _scrollCount++;
+                        DEBUG("Runx reset")                        
                     }
                     else
                     {
-                        _runX = _runX - 1;
+                        //_runX = _runX - 1;
+                        _runX--;
                     }
+                    DEBUG(_runX);
+                    DEBUG(_scrollCount);
+                    DEBUG(_scrollTimes);
+                    DEBUG("MOVE stop")
                 }
             }                        
             this->_drawText();
@@ -665,6 +694,7 @@ public:
     {
         text = t;
         //text += String("   ");
+        this->_centerText();
     }
 
     void setSpeed(uint16_t speed) // 0 - 1000, рекомендую от 50 до 300
@@ -686,6 +716,9 @@ public:
     {
         _scrollCount = 0;
         _scrollTimes = n;
+
+        this->_centerText();
+        DEBUG(String("Scroll setted: ") + String(_runX))
     }
 
     ~Text()
@@ -698,7 +731,7 @@ class EffectFactory
 {
 public:
     EffectFactory(){}
-    static IEffect *getEffect(EffectsName ef, uint32_t *leds, const uint8_t w, const uint8_t h)
+    static IEffect *getEffect(EffectsName ef, uint32_t *leds, uint8_t w, uint8_t h)
     {
         switch(ef)
         {

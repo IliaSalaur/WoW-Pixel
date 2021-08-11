@@ -1,17 +1,21 @@
 #include <Arduino.h>
+#include "Config.h"
 #include <SimpleFirebase.h>
 #include <SimpleLED.h>
 #include <ESP8266WiFi.h>
 #include <GParser.h>
 #include <bitmap.h>
-//#include <WiFiManager.h>
 #include "addons/TokenHelper.h"
 #include "addons/RTDBHelper.h"
-#include "Config.h"
+#include <SimpleWM.h>
+
+#define USE_WM
+#ifdef USE_WM
+SimpleWM wm;
+#endif
 
 FirebaseAuth auth;
 FirebaseConfig config;
-
 SimpleFirebase fb;
 SimpleLED<16, 8, D4> matrix;
 uint32_t leds[64];
@@ -84,27 +88,8 @@ void backColCallback(PathData data)
   DEBUG("Back color changed");
 }
 
-void setup()
+void initFB()
 {
-  randomSeed(micros());
-  Serial.begin(115200);
-  Serial.setTimeout(20);
-  delay(50);
-
-  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-  Serial.print("Connecting to Wi-Fi");
-  while (WiFi.status() != WL_CONNECTED)
-  {
-    Serial.print(".");
-    delay(300);
-  }
-  Serial.println();
-  Serial.print("Connected with IP: ");
-  Serial.println(WiFi.localIP());
-  Serial.println();
-
-  Serial.printf("Firebase Client v%s\n\n", FIREBASE_CLIENT_VERSION);
-
   config.api_key = API_KEY;
   auth.user.email = USER_EMAIL;
   auth.user.password = USER_PASSWORD;
@@ -118,16 +103,41 @@ void setup()
   fb.on(String("/Control/Brig"), brightnessCallback);
   fb.on(String("/Control/Text/Color"), textColCallback);
   fb.on(String("/Control/Text/BackColor"), backColCallback);
-
-
   fb.begin(&config, &auth);
-  matrix.begin();
 
-  //delay(3000);
+  Serial.printf("Firebase Client v%s\n\n", FIREBASE_CLIENT_VERSION);
+}
+
+void initWiFi()
+{
+#ifndef USE_WM
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+  while(!WiFi.isConnected()){Serial.print("-");delay(300);}
+  Serial.println();
+  Serial.print("Connected with IP: ");
+  Serial.println(WiFi.localIP());
+  Serial.println();
+#else
+  wm.begin(AP_NAME);
+#endif
+}
+
+void setup()
+{
+  randomSeed(micros());
+  Serial.begin(115200);
+  Serial.setTimeout(20);
+  delay(50);
+
+  initWiFi();
+  delay(100);
+  initFB();
+  matrix.begin();
 }
 
 void loop()
 {
   fb.handle();
-  matrix.handle();
+  matrix.handle(); 
 }
