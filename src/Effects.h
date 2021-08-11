@@ -627,7 +627,7 @@ private:
     {
         if(text != String(" ") && _scrollTimes == 0)
         {
-            _runX = (_w - int(text.length()) * ((_onlyDigits) ? 3:5)) / 2 - ((_onlyDigits == 1) ? 2:1);
+            _runX = (_w - int(text.length()) * ((_onlyDigits) ? 3:5)) / 2 - ((_onlyDigits == 1) ? ((_w == 8) ? 3 : 2):1);
 
         }
         DEBUG(String("_runX setted: ") + String(_runX))

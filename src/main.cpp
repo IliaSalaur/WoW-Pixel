@@ -159,7 +159,7 @@ void setup()
   Serial.setTimeout(20);
   delay(50);
 
-  digits.setY(0);
+  digits.setY((NUM_LEDS == 64) ? 1:0);
   digits.onlyDigits(1);
 
   initWiFi();
