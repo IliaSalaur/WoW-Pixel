@@ -14,11 +14,13 @@
 SimpleWM wm;
 #endif
 
+#define NUM_LEDS 128
+
 FirebaseAuth auth;
 FirebaseConfig config;
 SimpleFirebase fb;
 SimpleLED<16, 8, D4> matrix;
-uint32_t leds[64];
+uint32_t leds[NUM_LEDS];
 
 Text text;
 
@@ -30,7 +32,7 @@ void caseCallback(PathData data)
   switch(caseNum)
   {
   case 0:
-    for(int i = 0; i < 64; i++)
+    for(int i = 0; i < NUM_LEDS; i++)
     {
       matrix.drawPixel(i, leds[i]);
     }

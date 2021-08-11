@@ -586,20 +586,33 @@ private:
         {
             _leds[i] = _backCol;
         }  
-
+        int lastX = 0;
         int len = strlen(text.c_str());
         for(uint16_t i = 0, j = 0; i < len; i++, j++)
         {
             int charIndex = text.charAt(i);
             bool rusChar = 0;
+            bool smallSpace = 0;
             if(charIndex >= 208)
             {
                 charIndex <<= 8;
                 charIndex |= text.charAt(i + 1);
                 rusChar = 1;
-            }                                                
+            }
+
+            if(i + 1 < len)
+            {
+                if((charIndex >= 48 && charIndex <= 57) && (text[i + 1] >= 48 && text[i + 1] <= 57))
+                {
+                    smallSpace = 1;
+                }
+            }
             
-            _drawLetter(charIndex, j * 5 + j + _runX, 1, (_w*_h == 64) ? 3*5 : 5*7);    
+            //_drawLetter(charIndex, j * 5 + j + _runX, 1, (_w * _h == 64) ? 3*5 : 5*7);    //(i + 1 < len && (charIndex >= 48 && charIndex <= 57) && (text[i + 1] >= 48 && text[i + 1] <= 57))
+            //_drawLetter(charIndex, j * ((smallSpace) ? 1:5) + j + _runX, 1, (_w * _h == 64) ? 3*5 : 5*7);
+            _drawLetter(charIndex, lastX + _runX, 1, (_w * _h == 64) ? 3*5 : 5*7);
+
+            lastX += (smallSpace) ? 4:5;
             i += (rusChar) ? 1 : 0;
         }
     }
