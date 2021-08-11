@@ -8,6 +8,7 @@
 #include <Fonts.h>
 
 //#define CRGB
+//int sp = 2;
 
 enum EffectsName
 {
@@ -522,7 +523,7 @@ class Text : public IEffect
 private:
     String text = String(" ");
     uint16_t _speed =  TEXT_SPEED;
-    bool _onlyDigits = 1;
+    bool _onlyDigits = 0;
     int _runX = 0;
     int _scrollCount = 0;
     int _scrollTimes = 0;
@@ -590,32 +591,35 @@ private:
         }  
         int lastX = 0;
         int len = strlen(text.c_str());
+    
         for(uint16_t i = 0, j = 0; i < len; i++, j++)
         {
             int charIndex = text.charAt(i);
-            bool rusChar = 0;
-            bool smallSpace = 0;
-            if(charIndex >= 208)
+            if(charIndex != '\0')
             {
-                charIndex <<= 8;
-                charIndex |= text.charAt(i + 1);
-                rusChar = 1;
-            }
-
-            if(i + 1 < len)
-            {
-                if((charIndex >= 48 && charIndex <= 57) && (text[i + 1] >= 48 && text[i + 1] <= 57))
+                bool rusChar = 0;
+                bool smallSpace = 0;
+                if(charIndex >= 208)
                 {
-                    smallSpace = 1;
+                    charIndex <<= 8;
+                    charIndex |= text.charAt(i + 1);
+                    rusChar = 1;
                 }
+
+                if(i + 1 < len)
+                {
+                    if((charIndex >= 48 && charIndex <= 57) && (text[i + 1] >= 48 && text[i + 1] <= 57))
+                    {
+                        smallSpace = 1;
+                    }
+                }
+                
+                //_drawLetter(charIndex, j * 5 + j + _runX, 1, (_w * _h == 64) ? 3*5 : 5*7);    //(i + 1 < len && (charIndex >= 48 && charIndex <= 57) && (text[i + 1] >= 48 && text[i + 1] <= 57))
+                //_drawLetter(charIndex, j * ((smallSpace) ? 1:5) + j + _runX, 1, (_w * _h == 64) ? 3*5 : 5*7);
+                _drawLetter(charIndex, lastX + _runX, _y, (_w * _h == 64) ? 3*5 : 5*7);
+                lastX += (smallSpace) ? 4:5;
+                i += (rusChar) ? 1 : 0;
             }
-            
-            //_drawLetter(charIndex, j * 5 + j + _runX, 1, (_w * _h == 64) ? 3*5 : 5*7);    //(i + 1 < len && (charIndex >= 48 && charIndex <= 57) && (text[i + 1] >= 48 && text[i + 1] <= 57))
-            //_drawLetter(charIndex, j * ((smallSpace) ? 1:5) + j + _runX, 1, (_w * _h == 64) ? 3*5 : 5*7);
-            _drawLetter(charIndex, lastX + _runX, _y, (_w * _h == 64) ? 3*5 : 5*7);
-            _onlyDigits &= smallSpace;
-            lastX += (smallSpace) ? 4:5;
-            i += (rusChar) ? 1 : 0;
         }
     }
 
@@ -623,7 +627,8 @@ private:
     {
         if(text != String(" ") && _scrollTimes == 0)
         {
-            _runX = (_w - int(text.length()) * ((_onlyDigits) ? 3:5)) / 2 - ((_onlyDigits == 1) ? 3:1);
+            _runX = (_w - int(text.length()) * ((_onlyDigits) ? 3:5)) / 2 - ((_onlyDigits == 1) ? 2:1);
+
         }
         DEBUG(String("_runX setted: ") + String(_runX))
     }
@@ -644,6 +649,11 @@ public:
     Text()
     {
         text = String(" ");
+    }
+
+    void onlyDigits(bool od)
+    {
+        _onlyDigits = od;
     }
 
     void show() override
@@ -708,6 +718,8 @@ public:
     void setText(String t)
     {
         text = t;
+        int len = strlen(text.c_str());
+        DEBUG(len);
         _scrollCount = (_scrollCount == _scrollTimes) ? 0 : _scrollCount;
         //text += String("   ");
         this->_centerText();

@@ -159,7 +159,8 @@ void setup()
   Serial.setTimeout(20);
   delay(50);
 
-  digits.setY(2);
+  digits.setY(0);
+  digits.onlyDigits(1);
 
   initWiFi();
   delay(100);
@@ -171,4 +172,14 @@ void loop()
 {
   fb.handle();
   matrix.handle(); 
+/*
+  if(Serial.available())
+  {
+    sp = Serial.parseInt();
+    while (Serial.available())
+    {
+      Serial.read();
+    }
+    
+  }*/
 }
