@@ -706,6 +706,7 @@ public:
     void setText(String t)
     {
         text = t;
+        _scrollCount = (_scrollCount == _scrollTimes) ? 0 : _scrollCount;
         //text += String("   ");
         this->_centerText();
     }
