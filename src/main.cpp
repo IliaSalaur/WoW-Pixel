@@ -23,6 +23,7 @@ SimpleLED<16, 8, D4> matrix;
 uint32_t leds[NUM_LEDS];
 
 Text text;
+Text digits;
 
 int caseNum = 0;
 
@@ -42,6 +43,10 @@ void caseCallback(PathData data)
     matrix.setEffect(&text);
     break;
 
+  case 2:
+    matrix.setEffect(&digits);
+    break;
+
   default:
     matrix.setEffect(EffectsName((caseNum <= 17 && caseNum >=10) ? caseNum - 10 : 0));
     break;
@@ -58,6 +63,25 @@ void textCallback(PathData data)
   DEBUG("Text callback called")   
   text.setText(data.data);
   DEBUG(data.data) 
+}
+
+void digitsCallback(PathData data)
+{  
+  DEBUG("Digits callback called")   
+  digits.setText(data.data);
+  DEBUG(data.data) 
+}
+
+void digitsColCallback(PathData data)
+{
+  digits.setLetterColor(strtoul(data.data.substring(1).c_str(), NULL, 16));
+  DEBUG("Digits color changed");
+}
+
+void digitsBackColCallback(PathData data)
+{
+  digits.setBackgroundColor(strtoul(data.data.substring(1).c_str(), NULL, 16));
+  DEBUG("Digits Back color changed");
 }
 
 void scrollCallback(PathData data)
@@ -105,6 +129,9 @@ void initFB()
   fb.on(String("/Control/Brig"), brightnessCallback);
   fb.on(String("/Control/Text/Color"), textColCallback);
   fb.on(String("/Control/Text/BackColor"), backColCallback);
+  fb.on(String("/Control/Digits/Color"), digitsColCallback);
+  fb.on(String("/Control/Digits/BackColor"), digitsBackColCallback);
+  fb.on(String("/Control/Digits/Text"), digitsCallback);
   fb.begin(&config, &auth);
 
   Serial.printf("Firebase Client v%s\n\n", FIREBASE_CLIENT_VERSION);
@@ -131,6 +158,8 @@ void setup()
   Serial.begin(115200);
   Serial.setTimeout(20);
   delay(50);
+
+  digits.setY(2);
 
   initWiFi();
   delay(100);

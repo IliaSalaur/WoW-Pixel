@@ -522,9 +522,11 @@ class Text : public IEffect
 private:
     String text = String(" ");
     uint16_t _speed =  TEXT_SPEED;
+    bool _onlyDigits = 1;
     int _runX = 0;
     int _scrollCount = 0;
     int _scrollTimes = 0;
+    uint8_t _y = 1;
 
     uint32_t _letCol = 0xffffff, _backCol = 0;
 
@@ -610,8 +612,8 @@ private:
             
             //_drawLetter(charIndex, j * 5 + j + _runX, 1, (_w * _h == 64) ? 3*5 : 5*7);    //(i + 1 < len && (charIndex >= 48 && charIndex <= 57) && (text[i + 1] >= 48 && text[i + 1] <= 57))
             //_drawLetter(charIndex, j * ((smallSpace) ? 1:5) + j + _runX, 1, (_w * _h == 64) ? 3*5 : 5*7);
-            _drawLetter(charIndex, lastX + _runX, 1, (_w * _h == 64) ? 3*5 : 5*7);
-
+            _drawLetter(charIndex, lastX + _runX, _y, (_w * _h == 64) ? 3*5 : 5*7);
+            _onlyDigits &= smallSpace;
             lastX += (smallSpace) ? 4:5;
             i += (rusChar) ? 1 : 0;
         }
@@ -621,7 +623,7 @@ private:
     {
         if(text != String(" ") && _scrollTimes == 0)
         {
-            _runX = (_w - int(text.length()) * 5) / 2 - 1;
+            _runX = (_w - int(text.length()) * ((_onlyDigits) ? 3:5)) / 2 - ((_onlyDigits == 1) ? 3:1);
         }
         DEBUG(String("_runX setted: ") + String(_runX))
     }
@@ -709,6 +711,11 @@ public:
         _scrollCount = (_scrollCount == _scrollTimes) ? 0 : _scrollCount;
         //text += String("   ");
         this->_centerText();
+    }
+
+    void setY(uint8_t y)
+    {
+        _y = y;
     }
 
     void setSpeed(uint16_t speed) // 0 - 1000, рекомендую от 50 до 300
