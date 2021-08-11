@@ -616,7 +616,7 @@ private:
                 
                 //_drawLetter(charIndex, j * 5 + j + _runX, 1, (_w * _h == 64) ? 3*5 : 5*7);    //(i + 1 < len && (charIndex >= 48 && charIndex <= 57) && (text[i + 1] >= 48 && text[i + 1] <= 57))
                 //_drawLetter(charIndex, j * ((smallSpace) ? 1:5) + j + _runX, 1, (_w * _h == 64) ? 3*5 : 5*7);
-                _drawLetter(charIndex, lastX + _runX, _y, (_w * _h == 64) ? 3*5 : 5*7);
+                _drawLetter(charIndex, lastX + _runX, _y, (_w * _h == 64) ? 5*7 : 5*7);//3*5:5*7
                 lastX += (smallSpace) ? 4:6;
                 i += (rusChar) ? 1 : 0;
             }
@@ -627,7 +627,7 @@ private:
     {
         if(text != String(" ") && _scrollTimes == 0)
         {
-            _runX = (_w - int(text.length()) * ((_onlyDigits) ? 3:5)) / 2 - ((_onlyDigits == 1) ? ((_w == 8) ? 1 : 2):1);
+            _runX = (_w - int(text.length()) * ((_onlyDigits) ? 3:5)) / 2 - ((_onlyDigits == 1) ? ((_w == 8) ? 2 : 2):1);//1:2
 
         }
         DEBUG(String("_runX setted: ") + String(_runX))
