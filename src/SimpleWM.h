@@ -75,16 +75,27 @@ private:
 
     void handleNets()
     {
-        this->scanWiFi();
+        //this->scanWiFi();
         webServer->send(200, "application/json", JSON.stringify(nets));
     }
 
-    void scanWiFi()
+    void scanWiFi(int n)
     {
-        for(int i = 0; i < WiFi.scanNetworks(); i++)
+        DEBUG(n);
+        DEBUG(millis())
+        for(int i = 0; i < n; i++)
         {
             nets[i] = WiFi.SSID(i);
         }
+    }
+
+    void startScan()
+    {   
+        DEBUG("Scanning networks")
+        DEBUG(millis())
+        this->scanWiFi(WiFi.scanNetworks());        
+        DEBUG("Scan stoped");
+        DEBUG(millis())
     }
 
     void connectWiFi(WiFiConfig conf)
@@ -141,6 +152,8 @@ private:
 
     void startCaptivePortal(const char* ap_ssid, const char* ap_pass)
     {
+        //WiFi.scanNetworks(true);
+        this->startScan();
         DEBUG("CaptivePortal started")
         if(!SPIFFS.begin())
         {
