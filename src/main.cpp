@@ -10,16 +10,13 @@
 #include <SimpleWM.h>
 
 #define USE_WM
-#ifdef USE_WM
-SimpleWM wm;
-#endif
 
 #define NUM_LEDS 128
 
 FirebaseAuth auth;
 FirebaseConfig config;
 SimpleFirebase fb;
-SimpleLED<16, 8, D4> matrix;
+SimpleLED<8, 8, D4> matrix;
 uint32_t leds[NUM_LEDS];
 
 Text text;
@@ -148,24 +145,39 @@ void initWiFi()
   Serial.println(WiFi.localIP());
   Serial.println();
 #else
+  matrix.drawBitmap(wifiBitmap);
+  SimpleWM wm;
   wm.begin(AP_NAME);
+  matrix.drawBitmap(okBitmap);
 #endif
+}
+
+void initMatrix()
+{
+  matrix.begin();
+  matrix.drawBitmap(monsterBitmap);
+  delay(1000);
 }
 
 void setup()
 {
-  randomSeed(micros());
   Serial.begin(115200);
   Serial.setTimeout(20);
-  delay(50);
+  delay(500);
+  DEBUG("Serial setuped ")
+  initMatrix();
+
+  randomSeed(micros());
+  //Serial.begin(115200);
+  //Serial.setTimeout(20);
+  //delay(50);
 
   digits.setY((NUM_LEDS == 64) ? 0:0);//1:0
   digits.onlyDigits(1);
 
   initWiFi();
   delay(100);
-  initFB();
-  matrix.begin();
+  initFB();  
 }
 
 void loop()
@@ -183,3 +195,4 @@ void loop()
     
   }*/
 }
+

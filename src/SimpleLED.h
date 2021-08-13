@@ -78,7 +78,7 @@ public:
             this->_setPixels();
         #ifdef DEBUG_MATRIX
             emulateLeds(_width, _height, _leds);
-            #warning Virtual matrix active, switch it off
+            #warning (Virtual matrix active, switch it off)
         #else            
             //DEBUG("Adaf start")
             _matrix->show();
@@ -137,7 +137,33 @@ public:
                 _leds[XY(_width, _height, x + s_x, y + s_y)] = bitmap[x][y];
             }
         } 
-        _matrix->show();
+        this->handle();
+        _ef = nullptr;
+    }
+
+    void drawBitmap(const uint32_t bitmap[64])
+    {
+        this->clear();
+        DEBUG("drawing bitmap const")
+        for(int i = 0; i < 64; i++)
+        {
+            _leds[i] = bitmap[i];
+        }
+
+        this->handle();
+        _ef = nullptr;
+    }
+
+    void drawBitmap(uint32_t bitmap[64])
+    {
+        this->clear();
+        DEBUG("drawing bitmap ")
+        for(int i = 0; i < 64; i++)
+        {
+            _leds[i] = bitmap[i];
+        }
+
+        this->handle();
         _ef = nullptr;
     }
 
