@@ -9,7 +9,7 @@
 #include <FS.h>
 #include <Arduino_JSON.h>
 
-#define EEP_KEY_START 120
+#define EEP_KEY_START 165
 #define EEP_KEY_STOP 21
 #define WAIT_FOT_CONNECTION 30 //seconds
 
@@ -108,7 +108,7 @@ private:
             {
                 DEBUG("Bad credentials, reset")
                 connected = 0;
-                startCaptivePortal(AP_NAME);
+                startCaptivePortal(AP_NAME, AP_PASS);
                 break;
             }
         }        
@@ -139,7 +139,7 @@ private:
         }                
     }
 
-    void startCaptivePortal(const char* ap_ssid)
+    void startCaptivePortal(const char* ap_ssid, const char* ap_pass)
     {
         DEBUG("CaptivePortal started")
         if(!SPIFFS.begin())
@@ -149,10 +149,12 @@ private:
         WiFi.mode(WIFI_AP);
         apIP = IPAddress(192, 168, 43, 1);
         WiFi.softAPConfig(apIP, apIP, IPAddress(255, 255, 255, 0));
-        WiFi.softAP(ap_ssid);
+        WiFi.softAP(ap_ssid, ap_pass);
 
         dnsServer.reset(new DNSServer);
         webServer.reset(new ESP8266WebServer(80));
+
+        dnsServer->setErrorReplyCode(DNSReplyCode::NoError);
         dnsServer->start(DNS_PORT, "*", *apIP);
         webServer->on(String(F("/nets")), std::bind(&SimpleWM::handleNets, this));
         webServer->onNotFound(std::bind(&SimpleWM::handleRoot, this));
@@ -171,14 +173,14 @@ public:
         funcPtr = funcptr;
     }
 
-    void begin(const char* ap_ssid)
+    void begin(const char* ap_ssid, const char* ap_pass)
     {
         EEPROM.begin(100);
         WiFiConfig conf = checkEEPROM();
 
         if(!conf.isValid)
         {
-            startCaptivePortal(ap_ssid);
+            startCaptivePortal(ap_ssid, ap_pass);
         }
         else
         {

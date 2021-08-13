@@ -5,7 +5,7 @@
 #define WIFI_PASSWORD "069052345"
 
 #define AP_NAME "WowPixel"
-#define AP_PASS ""
+#define AP_PASS "12345678"
 
 #define API_KEY "AIzaSyCiMqSEMR44_G3LngmUJpW_8cs7DxQiyzo"
 
@@ -17,3 +17,5 @@
 //#define DEBUG_MATRIX
 
 #endif
+
+

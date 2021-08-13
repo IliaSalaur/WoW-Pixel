@@ -147,7 +147,7 @@ void initWiFi()
 #else
   matrix.drawBitmap(wifiBitmap);
   SimpleWM wm;
-  wm.begin(AP_NAME);
+  wm.begin(AP_NAME, AP_PASS);
   matrix.drawBitmap(okBitmap);
   delay(1500);
 #endif
