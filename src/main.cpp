@@ -149,6 +149,7 @@ void initWiFi()
   SimpleWM wm;
   wm.begin(AP_NAME);
   matrix.drawBitmap(okBitmap);
+  delay(15000);
 #endif
 }
 
@@ -156,21 +157,20 @@ void initMatrix()
 {
   matrix.begin();
   matrix.drawBitmap(monsterBitmap);
-  delay(1000);
+  delay(1500);
 }
 
 void setup()
 {
+  initMatrix();
+  
   Serial.begin(115200);
   Serial.setTimeout(20);
-  delay(500);
+  delay(50);
   DEBUG("Serial setuped ")
-  initMatrix();
+  
 
   randomSeed(micros());
-  //Serial.begin(115200);
-  //Serial.setTimeout(20);
-  //delay(50);
 
   digits.setY((NUM_LEDS == 64) ? 0:0);//1:0
   digits.onlyDigits(1);
