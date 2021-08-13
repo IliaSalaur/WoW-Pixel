@@ -156,6 +156,7 @@ void initWiFi()
 void initMatrix()
 {
   matrix.begin();
+  delay(200);
   matrix.drawBitmap(monsterBitmap);
   delay(1500);
 }
@@ -163,7 +164,7 @@ void initMatrix()
 void setup()
 {
   initMatrix();
-  
+
   Serial.begin(115200);
   Serial.setTimeout(20);
   delay(50);
