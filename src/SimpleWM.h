@@ -160,15 +160,17 @@ private:
             DEBUG("Spiffs failed");
         }
         WiFi.mode(WIFI_AP);
-        apIP = IPAddress(192, 168, 43, 1);
-        WiFi.softAPConfig(apIP, apIP, IPAddress(255, 255, 255, 0));
+        //apIP = IPAddress(192, 168, 43, 1);
+        //WiFi.softAPConfig(apIP, apIP, IPAddress(255, 255, 255, 255));
         WiFi.softAP(ap_ssid, ap_pass);
+        IPAddress hostIP = WiFi.softAPIP();
+        DEBUG(hostIP)
 
         dnsServer.reset(new DNSServer);
         webServer.reset(new ESP8266WebServer(80));
 
         dnsServer->setErrorReplyCode(DNSReplyCode::NoError);
-        dnsServer->start(DNS_PORT, "*", *apIP);
+        dnsServer->start(DNS_PORT, "*", *hostIP);
         webServer->on(String(F("/nets")), std::bind(&SimpleWM::handleNets, this));
         webServer->onNotFound(std::bind(&SimpleWM::handleRoot, this));
         webServer->on(String(F("/connect")), std::bind(&SimpleWM::handleConnect, this));

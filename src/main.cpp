@@ -155,6 +155,7 @@ void initWiFi()
 
 void initMatrix()
 {
+  delay(1000);
   matrix.begin();
   delay(700);
   matrix.drawBitmap(monsterBitmap);
