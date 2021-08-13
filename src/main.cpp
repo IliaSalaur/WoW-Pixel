@@ -145,6 +145,8 @@ void initWiFi()
   Serial.println(WiFi.localIP());
   Serial.println();
 #else
+  matrix.drawBitmap(monsterBitmap);
+  delay(2000);
   matrix.drawBitmap(wifiBitmap);
   SimpleWM wm;
   wm.begin(AP_NAME, AP_PASS);
@@ -155,11 +157,8 @@ void initWiFi()
 
 void initMatrix()
 {
-  delay(1000);
   matrix.begin();
   delay(700);
-  matrix.drawBitmap(monsterBitmap);
-  delay(2000);
 }
 
 void setup()
