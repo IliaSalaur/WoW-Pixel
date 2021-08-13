@@ -149,16 +149,16 @@ void initWiFi()
   SimpleWM wm;
   wm.begin(AP_NAME);
   matrix.drawBitmap(okBitmap);
-  delay(15000);
+  delay(1500);
 #endif
 }
 
 void initMatrix()
 {
   matrix.begin();
-  delay(200);
+  delay(700);
   matrix.drawBitmap(monsterBitmap);
-  delay(1500);
+  delay(2000);
 }
 
 void setup()
