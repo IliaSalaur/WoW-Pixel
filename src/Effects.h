@@ -649,6 +649,7 @@ public:
     Text()
     {
         text = String(" ");
+        this->setScrollTimes(0);
     }
 
     void onlyDigits(bool od)

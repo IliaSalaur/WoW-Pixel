@@ -16,7 +16,7 @@
 FirebaseAuth auth;
 FirebaseConfig config;
 SimpleFirebase fb;
-SimpleLED<16, 8, D2> matrix;
+SimpleLED<8, 8, D2> matrix;
 uint32_t leds[NUM_LEDS];
 
 Text text;
