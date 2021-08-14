@@ -16,7 +16,7 @@
 FirebaseAuth auth;
 FirebaseConfig config;
 SimpleFirebase fb;
-SimpleLED<8, 8, D2> matrix;
+SimpleLED<16, 8, D2> matrix;
 uint32_t leds[NUM_LEDS];
 
 Text text;
@@ -145,10 +145,10 @@ void initWiFi()
   Serial.println(WiFi.localIP());
   Serial.println();
 #else
-  matrix.drawBitmap(wifiBitmap);
+  matrix.drawBitmap<8, 8>(wifiBitmap);
   SimpleWM wm;
   wm.begin(AP_NAME, AP_PASS);
-  matrix.drawBitmap(okBitmap);
+  matrix.drawBitmap<8, 8>(okBitmap);
   //delay(1500);
 #endif
 }
@@ -157,7 +157,7 @@ void initMatrix()
 {
   matrix.begin();
   delay(700);
-  matrix.drawBitmap(monsterBitmap);
+  matrix.drawBitmap<8, 8>(monsterBitmap);
   delay(2000);
 }
 

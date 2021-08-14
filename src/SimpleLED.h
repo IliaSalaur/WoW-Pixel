@@ -127,7 +127,7 @@ public:
     }
 
     template<uint8_t _bitmapW, uint8_t _bitmapH>
-    void drawBitmap(uint32_t bitmap[_bitmapW][_bitmapH], uint8_t s_x, uint8_t s_y)
+    void drawBitmap(const uint32_t bitmap[_bitmapW][_bitmapH], uint8_t s_x, uint8_t s_y)
     {
         this->clear();
         for(int x = 0; x < _bitmapW; x++)
@@ -135,6 +135,26 @@ public:
             for(int y = 0; y < _bitmapH; y++)
             {
                 _leds[XY(_width, _height, x + s_x, y + s_y)] = bitmap[x][y];
+            }
+        } 
+        this->handle();
+        _ef = nullptr;
+    }
+
+    template<uint8_t _bitmapW, uint8_t _bitmapH>
+    void drawBitmap(const uint32_t bitmap[_bitmapW][_bitmapH])
+    {
+        int s_x = (_width -_bitmapW) / 2;
+        int s_y = _height - _bitmapH;   
+        this->clear();
+        for(int x = 0; x < _bitmapW; x++)
+        {
+            for(int y = 0; y < _bitmapH; y++)
+            {
+                if(s_x + x < _width && s_y + y < _height)
+                {
+                    _leds[XY(_width, _height, x + s_x, y + s_y)] = bitmap[x][y];
+                }                
             }
         } 
         this->handle();
