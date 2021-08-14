@@ -237,14 +237,14 @@ public:
 
     }
 
-    void begin(FirebaseConfig *config, FirebaseAuth *auth)
+    void begin(FirebaseConfig *config, FirebaseAuth *auth, String path)
     {
         pSingletonInstance = this;        
         Firebase.begin(config, auth);
         Firebase.reconnectWiFi(true);
         _fbdo.setBSSLBufferSize(4096, 4096);//2048, 2048
         _fbdo.setResponseSize(4096);//2048
-        if (!Firebase.beginStream(_fbdo, "/WowPixelMini/IlyaTtest"))
+        if (!Firebase.beginStream(_fbdo, path))
         {
           //Serial.println("------------------------------------");
           //Serial.println("Can't begin stream connection...");

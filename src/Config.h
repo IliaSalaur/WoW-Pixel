@@ -8,8 +8,8 @@
 #define AP_PASS "12345678"
 
 #define API_KEY "AIzaSyCiMqSEMR44_G3LngmUJpW_8cs7DxQiyzo"
-
 #define DATABASE_URL "https://wowpixel-test1-default-rtdb.firebaseio.com/" //<databaseName>.firebaseio.com or <databaseName>.<region>.firebasedatabase.app
+#define PATH "/WowPixelMini/IlyaTest2"
 
 #define USER_EMAIL "salaur.ilie@gmail.com"
 #define USER_PASSWORD "12345678"

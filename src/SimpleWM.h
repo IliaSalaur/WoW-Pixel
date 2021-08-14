@@ -9,7 +9,7 @@
 #include <FS.h>
 #include <Arduino_JSON.h>
 
-#define EEP_KEY_START 165
+#define EEP_KEY_START 168
 #define EEP_KEY_STOP 21
 #define WAIT_FOT_CONNECTION 30 //seconds
 
@@ -18,6 +18,18 @@ const char* htmlP PROGMEM ="<!DOCTYPE html> <html > <head> <title>WowPixel</titl
 
 /*
 const char * htmlP PROGMEM = ("<!DOCTYPE html> <html onload = \" redir()\"> <head> <title>WowPixel</title> </head> <body> <h2>Connect to WiFi</h2> <form action=\"/connect\"> <label for=\"ssid\">Ssid:</label><br> <input type=\"text\" id=\"ssid\" name=\"ssid\" value=\"\"><br> <label for=\"pass\">Password:</label><br> <input type=\"text\" id=\"pass\" name=\"pass\" value=\"\"><br><br> <input type=\"submit\" value=\"Connect\"> </form> </body> <script> function redir(){location.replace(\"/\");}</script></html>");*/
+
+struct WiFiData
+{
+    String ssid = "";
+    int8_t rssi = 0;
+
+    WiFiData(String _ssid, int8_t _rssi)
+    {
+        ssid = _ssid;
+        rssi = _rssi;
+    }
+};
 
 struct WiFiConfig
 {
@@ -53,7 +65,7 @@ private:
     std::unique_ptr<DNSServer> dnsServer;
     std::unique_ptr<ESP8266WebServer> webServer;
 
-    JSONVar nets;
+    JSONVar _nets;
 
     void(*funcPtr)() = nullptr;
     bool connected = 0;
@@ -76,17 +88,55 @@ private:
     void handleNets()
     {
         //this->scanWiFi();
-        webServer->send(200, "application/json", JSON.stringify(nets));
+        webServer->send(200, "application/json", JSON.stringify(_nets));
     }
 
     void scanWiFi(int n)
     {
         DEBUG(n);
         DEBUG(millis())
+        vector<WiFiData> ssids;
+
         for(int i = 0; i < n; i++)
         {
-            nets[i] = WiFi.SSID(i);
+            bool repeats = 0;
+            WiFiData wd(WiFi.SSID(i), WiFi.RSSI(i));
+            for(int j = 0; j < i; j++)
+            {
+                if(ssids[j].ssid == wd.ssid)
+                {
+                    repeats = 1;
+                    break;
+                }
+            }
+            if(!repeats)
+            {
+                ssids.push_back(wd);
+            }            
         }
+
+        bool sorted = 1;
+        int s = ssids.size();
+        do{
+            sorted = 1;
+            for(int i = 0; i < s; i++)
+            {                                
+                if(i + 1 < s && ssids[i].rssi > ssids[i + 1].rssi)
+                {
+                    int8_t rssi = ssids[i].rssi;
+                    ssids[i].rssi = ssids[i + 1].rssi;
+                    ssids[i + 1].rssi = rssi;
+                    sorted = 0;
+                }
+            }
+        }while(!sorted);
+
+        JSONVar nets;
+        for(int i = 0; i < s; i++)
+        {
+            nets[i] = ssids[i].ssid;
+        }
+        _nets = nets;
     }
 
     void startScan()
@@ -153,7 +203,6 @@ private:
     void startCaptivePortal(const char* ap_ssid, const char* ap_pass)
     {
         //WiFi.scanNetworks(true);
-        this->startScan();
         DEBUG("CaptivePortal started")
         if(!SPIFFS.begin())
         {
@@ -163,6 +212,7 @@ private:
         //apIP = IPAddress(192, 168, 43, 1);
         //WiFi.softAPConfig(apIP, apIP, IPAddress(255, 255, 255, 255));
         WiFi.softAP(ap_ssid, ap_pass);
+        delay(200);
         IPAddress hostIP = WiFi.softAPIP();
         DEBUG(hostIP)
 
@@ -174,8 +224,10 @@ private:
         webServer->on(String(F("/nets")), std::bind(&SimpleWM::handleNets, this));
         webServer->onNotFound(std::bind(&SimpleWM::handleRoot, this));
         webServer->on(String(F("/connect")), std::bind(&SimpleWM::handleConnect, this));
-        webServer->serveStatic("/", SPIFFS, "/Page.html");
+        webServer->serveStatic("/", SPIFFS, "/index.html");
+        webServer->serveStatic("/", SPIFFS, "/");
         webServer->begin();
+        this->startScan();
     }
 
 public:
@@ -211,10 +263,16 @@ public:
 
     void handle()
     {
+        static uint32_t scanTimer = 0;
         if(connected == 0)
         {
             dnsServer->processNextRequest();
             webServer->handleClient();
+        }
+        if(millis() - scanTimer >= 7000)
+        {
+            scanTimer = millis();
+            this->startScan();
         }
     }
 

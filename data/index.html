@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Connect WiFi</title>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" type="text/css" href="style.css">
+    </head>
+    <body>
+        <div class="header">
+            <br>
+            <h3 class = "name"> WOW PIXEL WI-FI </h3>
+            <h4 class = "description"> Выберите Wi-Fi сеть</h4>
+        </div>
+
+        <div class="content">
+            <div class="scanned-wifi description">
+                <br>
+                <label  class="network" id = "0" onclick="onClick(0)"></label></br>
+                <label  class="network" id = "1" onclick="onClick(1)"></label></br>
+                <label  class="network" id = "2" onclick="onClick(2)"></label ><br>
+                <label  class="network" id = "3" onclick="onClick(3)"></label ><br>
+                <label  class="network" id = "4" onclick="onClick(4)"></label ><br>
+                <label  class="network" id = "5" onclick="onClick(5)"></label ><br>
+                <label  class="network" id = "6" onclick="onClick(6)"></label></br>
+                <label  class="network" id = "7" onclick="onClick(7)"></label></br>
+                <label  class="network" id = "8" onclick="onClick(8)"></label ><br>
+                <label  class="network" id = "9" onclick="onClick(9)"></label ><br>
+            </div>
+            <div class="forms">
+                <form action="/connect">
+                    <label class = "description f-el"for="ssid" id = "ssid">Выбранная сеть</label><br>
+                    <input class ="glow f-el" type="text" id = "ssid1" value = "" name="ssid"/><br>
+                    <label class = "description f-el"for="pass">Пароль сети</label><br>
+                    <input class ="glow f-el" type="text" id="pass" name="pass"><br>
+                    <p class="description">
+                        После настройки сети нажмите </br>
+                        Save и вернитесь в приложение
+                    </p>
+                    <input class = "button f-el glow" type="submit" value="Save">
+                </form>
+                </div>
+            </div>
+        </div>
+        <script src = "script.js"></script>
+    </body>    
+</html>
+

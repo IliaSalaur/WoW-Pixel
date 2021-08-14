@@ -16,7 +16,7 @@
 FirebaseAuth auth;
 FirebaseConfig config;
 SimpleFirebase fb;
-SimpleLED<8, 8, D4> matrix;
+SimpleLED<16, 8, D2> matrix;
 uint32_t leds[NUM_LEDS];
 
 Text text;
@@ -129,7 +129,7 @@ void initFB()
   fb.on(String("/Control/Digits/Color"), digitsColCallback);
   fb.on(String("/Control/Digits/BackColor"), digitsBackColCallback);
   fb.on(String("/Control/Digits/Text"), digitsCallback);
-  fb.begin(&config, &auth);
+  fb.begin(&config, &auth, PATH);
 
   Serial.printf("Firebase Client v%s\n\n", FIREBASE_CLIENT_VERSION);
 }
