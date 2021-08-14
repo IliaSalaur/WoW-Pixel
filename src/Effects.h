@@ -723,7 +723,7 @@ public:
         DEBUG(len);
         _scrollCount = (_scrollCount == _scrollTimes) ? 0 : _scrollCount;
         //text += String("   ");
-        this->_centerText();
+        this->setScrollTimes(_scrollTimes);
     }
 
     void setY(uint8_t y)
