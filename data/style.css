@@ -33,6 +33,7 @@ body{
 
 input[type="text"]
 { 
+    text-align: center;
     padding: 20px;
     width: 200px;
     height: 10px; 
@@ -45,6 +46,7 @@ input[type="text"]
 }
 
 .forms input{
+    text-align: center;
     color: #00A0FF;   
     background: rgb(43,32, 72);
     border: none;   

@@ -235,9 +235,10 @@ public:
     SimpleWM()
     {}
 
-    SimpleWM onConnect(void(*funcptr)())
+    SimpleWM* onConnect(void(*funcptr)())
     {
         funcPtr = funcptr;
+        return this;
     }
 
     void begin(const char* ap_ssid, const char* ap_pass)

@@ -1,15 +1,10 @@
 #ifndef SIMPLE_FIREBASE_H
 #define SIMPLE_FIREBASE_H
 
-#include <FirebaseESP8266.h>
+#include <Firebase_ESP_Client.h>
+#include "addons/TokenHelper.h"
+#include "addons/RTDBHelper.h"
 #include <vector>
-
-#define DEBUG_SIMPLE_FIREBASE
-#ifdef DEBUG_SIMPLE_FIREBASE
-#define DEBUG(x) Serial.println(x);
-#else 
-#define DEBUG(x)
-#endif
 
 struct PathData
 {
@@ -46,21 +41,43 @@ struct PathCallback
 /*
 struct SendQuery
 {
-    StreamData *data;
+    FirebaseStream *data;
 };*/
 
 using namespace std;
+
+void tokenHandler(TokenInfo info)
+{
+    static int count = 0;    
+
+    if (info.status == token_status_error)
+    {
+        count++;
+        Serial.printf("Token info: type = %s, status = %s\n", getTokenType(info).c_str(), getTokenStatus(info).c_str());
+        Serial.printf("Token error: %s\n", getTokenError(info).c_str());
+    }
+    else
+    {
+        Serial.printf("Token info: type = %s, status = %s\n", getTokenType(info).c_str(), getTokenStatus(info).c_str());
+    }
+
+    if(count >= 4)
+    {
+        DEBUG("Count full, reset");
+        Serial.flush();
+        ESP.reset();
+    }
+}
 
 class SimpleFirebase
 {
 private:
     FirebaseData _fbdo;
     vector<PathCallback> _pathcalls;
-    vector<PathData*> _sendquery;
 
     static SimpleFirebase *pSingletonInstance;
 
-    static void streamCallback(StreamData data)
+    static void streamCallback(FirebaseStream data)
     {
         if(pSingletonInstance)  pSingletonInstance->_streamCallback(data);
     }
@@ -70,7 +87,7 @@ private:
         if(pSingletonInstance && tout)  pSingletonInstance->_streamTimeoutCallback(tout);
     }
 
-    void _streamCallback(StreamData data)
+    void _streamCallback(FirebaseStream data)
     {
         DEBUG(data.dataPath())
         DEBUG(data.stringData())
@@ -91,12 +108,7 @@ private:
         DEBUG("TIMEOUT")
     }
 
-    void _addQuery(PathData* data)
-    {
-        _sendquery.push_back(data);
-    }
-
-    void _handleCallbacks(StreamData data)
+    void _handleCallbacks(FirebaseStream data)
     {
         for(PathCallback pc : _pathcalls) 
             {
@@ -126,22 +138,6 @@ private:
                 }
             }
     }
-
-    void _handleQuery()
-    {
-        for(uint16_t i = 0; i < _sendquery.size(); i++)
-        {
-            if(Firebase.ready())
-            {
-                Firebase.set(_fbdo, _sendquery[i]->path, _sendquery[i]->data);
-                DEBUG("Query sent:")
-                DEBUG(int(_sendquery[i]))
-                _sendquery.erase(_sendquery.begin() + i);                
-            }
-            else break;
-        }
-    }
-
 
     void _parseJson(FirebaseJson* json)
     {
@@ -181,42 +177,20 @@ private:
             json->iteratorEnd();
         }
     }
-    void _parseJson(StreamData* data)
+    void _parseJson(FirebaseStream* data)
     {
         FirebaseJson* json = data->jsonObjectPtr();
         String commonPath = data->dataPath();
         commonPath += String("/");
         if(1)
-        {           
+        {   DEBUG("iterator begin");
             for(size_t i = 0; i < json->iteratorBegin(); i++)
             {
                 String key, value;
                 int type = 0;
-
+                DEBUG("iterator get")
                 json->iteratorGet(i, type, key, value);
-                /*
-                if(value.indexOf("{") != -1) 
-                {
-                    _handleCallbacks(PathData(commonPath + key, value)); //PushData's datatype should be int instead of string. But to be honest, this library is a piece of shit, really. I would rewrite it if i had time
-                    // data->dataTypeEnum returns uint8_t but should return Enum. And it's just one example, i had a "little bit" more
-                    //
-                    //   По этому если честно надо либо написать свою библиотеку, либо переписать это дело на TCP но тогда нужно будет перерыть всё мобильное приложение (если оно написано с использованием ФП)
-                    //
-                    //    Заменил PushData на PathData (тоже самое но без dataType) потому что iteratorGet 'return не тип даных (строка, инт) а какой-от бред бесполезный
-                    
-                    DEBUG(commonPath + key)
-                    DEBUG(value)
-                }
-                else 
-                {
-                    commonPath = String("/");
-                    commonPath += key;
-                    commonPath += String("/");
-                    //DEBUG("Array")
-                    //DEBUG(commonPath)
-                    //DEBUG(value)
-                }
-*/
+                DEBUG("iterator getted")
                 if(value.indexOf("{") != -1)
                 {
                     commonPath = data->dataPath();
@@ -225,7 +199,9 @@ private:
                 }
                 DEBUG(commonPath + key)
                 DEBUG(value)
+                DEBUG("calback start")
                 _handleCallbacks(PathData(commonPath + key, value));
+                DEBUG("calback end")
             }
             json->iteratorEnd();
         }
@@ -234,7 +210,7 @@ private:
 public:
     SimpleFirebase()
     {
-
+        _pathcalls.reserve(10);
     }
 
     void begin(FirebaseConfig *config, FirebaseAuth *auth, String path)
@@ -244,7 +220,7 @@ public:
         Firebase.reconnectWiFi(true);
         _fbdo.setBSSLBufferSize(4096, 4096);//2048, 2048
         _fbdo.setResponseSize(4096);//2048
-        if (!Firebase.beginStream(_fbdo, path))
+        if (!Firebase.RTDB.beginStream(&_fbdo, path.c_str()))
         {
           //Serial.println("------------------------------------");
           //Serial.println("Can't begin stream connection...");
@@ -252,7 +228,7 @@ public:
           //Serial.println("------------------------------------");
           //Serial.println();
         }
-        Firebase.setStreamCallback(_fbdo, SimpleFirebase::streamCallback, SimpleFirebase::streamTimeoutCallback);
+        Firebase.RTDB.setStreamCallback(&_fbdo, SimpleFirebase::streamCallback, SimpleFirebase::streamTimeoutCallback);
 
     }
 
@@ -267,7 +243,6 @@ public:
 
     void handle()
     {
-        _handleQuery();
     }
     /*
     void get(String path)

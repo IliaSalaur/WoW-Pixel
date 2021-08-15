@@ -14,6 +14,10 @@
 #define USER_EMAIL "salaur.ilie@gmail.com"
 #define USER_PASSWORD "12345678"
 
+#define FPS_PERIOD 17//1000ms / 60fps =  ~17
+
+#define NUM_LEDS 128
+
 //#define DEBUG_MATRIX
 
 #endif

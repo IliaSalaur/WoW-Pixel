@@ -2,7 +2,7 @@
 #define SIMPLELED
 
 #include <Adafruit_NeoPixel.h>
-#include <Effects.h>
+#include <Effects/EffectsFactory.h>
 #include <VirtualMatrix.h>
 
 
@@ -14,7 +14,8 @@ class SimpleLED
 {
 private:
     uint32_t _leds[_width * _height];
-    IEffect* _ef;
+    shared_ptr<IEffect> _ef;
+    //IEffect* _ef;
     Adafruit_NeoPixel *_matrix;
 
     void _setPixels()
@@ -29,6 +30,7 @@ public:
     SimpleLED()
     {
         _matrix = new Adafruit_NeoPixel(_width * _height, pin, NEO_GRB + NEO_KHZ800);
+        _ef.reset();
     }
 
     void begin()
@@ -61,7 +63,7 @@ public:
             _matrix->show();
             #endif
         }
-        _ef = nullptr;
+        _ef.reset();
     }
 
     void drawPixelXY(int x, int y, uint32_t color)
@@ -71,55 +73,32 @@ public:
 
     void handle()
     {
+        static uint32_t fps_timer = 0;
         if(_ef) 
         {
             _ef->show();                    
         }
+        if(millis() - fps_timer >= FPS_PERIOD)
+        {
             this->_setPixels();
-        #ifdef DEBUG_MATRIX
+#ifdef DEBUG_MATRIX
             emulateLeds(_width, _height, _leds);
-            #warning (Virtual matrix active, switch it off)
-        #else            
-            //DEBUG("Adaf start")
+#warning (Virtual matrix active, switch it off)
+#else            
             _matrix->show();
-            //DEBUG("Adaf stop")
-        #endif
-
-        #ifdef DEBUG_CORRECTION
-            if(Serial.available())
-            {
-                char c = Serial.read();
-                int i = Serial.parseInt();
-                switch (c)
-                {
-                case 'r':
-                    _matrix->rOffset = i;
-                    break;
-                
-                case 'g':
-                    _matrix->gOffset = i;
-                    break;
-
-                case 'b':
-                    _matrix->bOffset = i;
-                    break;
-                }
-            }
-            while(Serial.available()) Serial.read();
-        #endif
+#endif
+        }            
     }
 
     void setEffect(EffectsName ef)
     {
-        //_ef = EffectFactory::getEffect(ef, _leds, 8, 8);
         _matrix->clear();
-        this->clear();
-        _ef = EffectFactory::getEffect(ef, _leds, _width, _height);//       Старая версия с использованием Enum и EffectFactory
-        //_ef = ef;
+        this->clear();   
+        _ef.reset(EffectFactory::getEffect(ef, _leds, _width, _height));//       Старая версия с использованием Enum и EffectFactory
         
     }
 
-    void setEffect(IEffect * ef)
+    void setEffect(shared_ptr<IEffect> ef)
     {
         _ef = ef;
         _ef->setLeds(_leds);
@@ -138,7 +117,7 @@ public:
             }
         } 
         this->handle();
-        _ef = nullptr;
+        _ef.reset();
     }
 
     template<uint8_t _bitmapW, uint8_t _bitmapH>
@@ -158,7 +137,7 @@ public:
             }
         } 
         this->handle();
-        _ef = nullptr;
+        _ef.reset();
     }
 
     void drawBitmap(const uint32_t bitmap[64])
@@ -171,7 +150,7 @@ public:
         }
 
         this->handle();
-        _ef = nullptr;
+        _ef.reset();
     }
 
     void drawBitmap(uint32_t bitmap[64])
@@ -184,7 +163,7 @@ public:
         }
 
         this->handle();
-        _ef = nullptr;
+        _ef.reset();
     }
 
     void setBrightness(uint8_t brig)

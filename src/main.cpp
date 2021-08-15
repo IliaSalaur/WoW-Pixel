@@ -1,26 +1,23 @@
 #include <Arduino.h>
+#include <Debug.h>
 #include "Config.h"
 #include <SimpleFirebase.h>
 #include <SimpleLED.h>
 #include <ESP8266WiFi.h>
 #include <GParser.h>
 #include <bitmap.h>
-#include "addons/TokenHelper.h"
-#include "addons/RTDBHelper.h"
 #include <SimpleWM.h>
 
 #define USE_WM
-
-#define NUM_LEDS 128
 
 FirebaseAuth auth;
 FirebaseConfig config;
 SimpleFirebase fb;
 SimpleLED<16, 8, D2> matrix;
-uint32_t leds[NUM_LEDS];
 
-Text text;
-Text digits;
+shared_ptr<Text> text(new Text());
+shared_ptr<Text> digits(new Text());
+shared_ptr<Painter> painter(new Painter());
 
 int caseNum = 0;
 
@@ -30,18 +27,15 @@ void caseCallback(PathData data)
   switch(caseNum)
   {
   case 0:
-    for(int i = 0; i < NUM_LEDS; i++)
-    {
-      matrix.drawPixel(i, leds[i]);
-    }
+    matrix.setEffect(painter);
     break;
 
   case 1:
-    matrix.setEffect(&text);
+    matrix.setEffect(text);
     break;
 
   case 2:
-    matrix.setEffect(&digits);
+    matrix.setEffect(digits);
     break;
 
   default:
@@ -58,56 +52,52 @@ void brightnessCallback(PathData data)
 void textCallback(PathData data)
 {  
   DEBUG("Text callback called")   
-  text.setText(data.data);
+  text->setText(data.data);
   DEBUG(data.data) 
 }
 
 void digitsCallback(PathData data)
 {  
   DEBUG("Digits callback called")   
-  digits.setText(data.data);
+  digits->setText(data.data);
   DEBUG(data.data) 
 }
 
 void digitsColCallback(PathData data)
 {
-  digits.setLetterColor(strtoul(data.data.substring(1).c_str(), NULL, 16));
+  digits->setLetterColor(strtoul(data.data.substring(1).c_str(), NULL, 16));
   DEBUG("Digits color changed");
 }
 
 void digitsBackColCallback(PathData data)
 {
-  digits.setBackgroundColor(strtoul(data.data.substring(1).c_str(), NULL, 16));
+  digits->setBackgroundColor(strtoul(data.data.substring(1).c_str(), NULL, 16));
   DEBUG("Digits Back color changed");
 }
 
 void scrollCallback(PathData data)
 {
   DEBUG("Scroll callback called")
-  text.setScrollTimes(data.data.toInt());
+  text->setScrollTimes(data.data.toInt());
   DEBUG(data.data.toInt())
 }
 
 void drawCallback(PathData data)
 {
   int ledNum = data.path.substring(11).toInt();
-  uint32_t colHex = strtoul(data.data.substring(1).c_str(), NULL, 16);
-
-  if(caseNum == 0) matrix.drawPixel(ledNum, colHex);
-  
-  leds[ledNum] = colHex;
-  DEBUG(String("DrawCallback: ") + String(ledNum) + String(" ") + String(colHex))
+  painter->draw(ledNum, data.data);
+  DEBUG(String("DrawCallback: ") + String(ledNum)/* + String(" ") + String(colHex)*/)
 }
 
 void textColCallback(PathData data)
 {
-  text.setLetterColor(strtoul(data.data.substring(1).c_str(), NULL, 16));
+  text->setLetterColor(strtoul(data.data.substring(1).c_str(), NULL, 16));
   DEBUG("Text color changed");
 }
 
 void backColCallback(PathData data)
 {
-  text.setBackgroundColor(strtoul(data.data.substring(1).c_str(), NULL, 16));
+  text->setBackgroundColor(strtoul(data.data.substring(1).c_str(), NULL, 16));
   DEBUG("Back color changed");
 }
 
@@ -117,7 +107,7 @@ void initFB()
   auth.user.email = USER_EMAIL;
   auth.user.password = USER_PASSWORD;
   config.database_url = DATABASE_URL;
-  config.token_status_callback = tokenStatusCallback; 
+  config.token_status_callback = tokenHandler; 
 
   fb.on(String("/Matrix/"), drawCallback);
   fb.on(String("/Control/Text/Text"), textCallback);
@@ -173,8 +163,8 @@ void setup()
 
   randomSeed(micros());
 
-  digits.setY((NUM_LEDS == 64) ? 0:0);//1:0
-  digits.onlyDigits(1);
+  digits->setY((NUM_LEDS == 64) ? 0:0);//1:0
+  digits->onlyDigits(1);
 
   initWiFi();
   delay(100);
@@ -183,8 +173,16 @@ void setup()
 
 void loop()
 {
-  fb.handle();
+  static uint32_t heapTimer = 0;
+  if(millis() - heapTimer >= 300)
+  {
+    heapTimer = millis();
+    DEBUG(String("m = ") + String(ESP.getFreeHeap()));
+  }
+  //fb.handle();
+  yield();
   matrix.handle(); 
+  yield();
 /*
   if(Serial.available())
   {

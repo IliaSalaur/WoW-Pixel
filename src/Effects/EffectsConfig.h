@@ -29,5 +29,8 @@
 //Text
 #define TEXT_SPEED 100
 
+//Painter
+#define PAINTER_BUFFER_SIZE NUM_LEDS
+
 
 #endif
