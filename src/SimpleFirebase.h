@@ -1,7 +1,7 @@
 #ifndef SIMPLE_FIREBASE_H
 #define SIMPLE_FIREBASE_H
 
-#include <FirebaseESP8266.h>
+#include <Firebase_ESP_Client.h>
 #include "addons/TokenHelper.h"
 #include "addons/RTDBHelper.h"
 #include <vector>
@@ -13,6 +13,11 @@ struct PathData
         path = p; 
         data = d;
     }   
+    PathData()
+    {
+        path = "";
+        data = "";
+    }
     String path;
     String data;
 };
@@ -41,7 +46,7 @@ struct PathCallback
 /*
 struct SendQuery
 {
-    StreamData *data;
+    FirebaseStream *data;
 };*/
 
 using namespace std;
@@ -77,7 +82,7 @@ private:
 
     static SimpleFirebase *pSingletonInstance;
 
-    static void streamCallback(StreamData data)
+    static void streamCallback(FirebaseStream data)
     {
         if(pSingletonInstance)  pSingletonInstance->_streamCallback(data);
     }
@@ -87,7 +92,7 @@ private:
         if(pSingletonInstance && tout)  pSingletonInstance->_streamTimeoutCallback(tout);
     }
 
-    void _streamCallback(StreamData data)
+    void _streamCallback(FirebaseStream data)
     {
         DEBUG(data.dataPath())
         DEBUG(data.stringData())
@@ -99,7 +104,7 @@ private:
         }
         else 
         {
-            _handleCallbacks(data);
+            _handleCallbacks(&data);
         }
     }
 
@@ -108,17 +113,31 @@ private:
         DEBUG("TIMEOUT")
     }
 
-    void _handleCallbacks(StreamData data)
+    void _handleCallbacks(FirebaseStream* data)
     {
-        for(PathCallback pc : _pathcalls) 
-            {
-                //if(pc.path == data.dataPath())
-                if(data.dataPath().indexOf(pc.path) != -1)
-                {
-                    if(pc.funcptr)  pc.funcptr(PathData(data.dataPath(), data.stringData()));
-                    break;
-                }
-            }
+        this->_handleCallbacks(this->_castFirebaseStream(data));
+    }
+
+    PathData _castFirebaseStream(FirebaseStream* data)
+    {
+        DEBUG("Cast start")
+        PathData pd;
+        pd.path = data->dataPath();
+        switch(data->dataTypeEnum())
+        {
+        case fb_esp_rtdb_data_type_integer:
+            pd.data = String(data->to<int>());
+            DEBUG("Cast type: int")
+            break;
+
+        case fb_esp_rtdb_data_type_string:
+            pd.data = data->to<String>();
+            DEBUG("Cast type: string")
+            break;
+        }
+        DEBUG(pd.path)
+        DEBUG(pd.data)
+        return pd;
     }
 
     void _handleCallbacks(PathData data)
@@ -139,58 +158,32 @@ private:
             }
     }
 
-    void _parseJson(FirebaseJson* json)
-    {
-        //SimpleJSON js(data->stringData());
-        String commonPath;
-        if(1)
-        {           
-            for(size_t i = 0; i < json->iteratorBegin(); i++)
-            {
-                String key, value;
-                int type = 0;
-
-                json->iteratorGet(i, type, key, value);
-
-                if(value.indexOf("{") == -1) 
-                {
-                    _handleCallbacks(PathData(commonPath + key, value)); //PushData's datatype should be int instead of string. But to be honest, this library is a piece of shit, really. I would rewrite it if i had time
-                    // data->dataTypeEnum returns uint8_t but should return Enum. And it's just one example, i had a "little bit" more
-                    /*
-                        По этому если честно надо либо написать свою библиотеку, либо переписать это дело на TCP но тогда нужно будет перерыть всё мобильное приложение (если оно написано с использованием ФП)
-
-                        Заменил PushData на PathData (тоже самое но без dataType) потому что iteratorGet 'return не тип даных (строка, инт) а какой-от бред бесполезный
-                    */
-                    DEBUG(commonPath + key)
-                    DEBUG(value)
-                }
-                else 
-                {
-                    commonPath = String("/");
-                    commonPath += key;
-                    commonPath += String("/");
-                    //DEBUG("Array")
-                    //DEBUG(commonPath)
-                    //DEBUG(value)
-                }
-            }
-            json->iteratorEnd();
-        }
-    }
-    void _parseJson(StreamData* data)
+    void _parseJson(FirebaseStream* data)
     {
         FirebaseJson* json = data->jsonObjectPtr();
         String commonPath = data->dataPath();
         commonPath += String("/");
         if(1)
-        {   DEBUG("iterator begin");
+        {   //DEBUG("iterator begin");
             for(size_t i = 0; i < json->iteratorBegin(); i++)
             {
                 String key, value;
                 int type = 0;
-                DEBUG("iterator get")
+                //DEBUG("iterator get")
                 json->iteratorGet(i, type, key, value);
-                DEBUG("iterator getted")
+                //DEBUG("iterator getted")
+
+                if(value.startsWith("\""))
+                {
+                    DEBUG("Bad string start")
+                    value.remove(0, 1);
+                    if(value.endsWith("\""))
+                    {
+                        DEBUG("Bad string end")
+                        value.remove(value.length() - 1, 1);
+                    }
+                }
+
                 if(value.indexOf("{") != -1)
                 {
                     commonPath = data->dataPath();
@@ -215,21 +208,20 @@ public:
 
     void begin(FirebaseConfig *config, FirebaseAuth *auth, String path)
     {
-        DEBUG(String("Path is ") + path)
-        pSingletonInstance = this;
+        pSingletonInstance = this;        
         Firebase.begin(config, auth);
         Firebase.reconnectWiFi(true);
         _fbdo.setBSSLBufferSize(4096, 4096);//2048, 2048
         _fbdo.setResponseSize(4096);//2048
-        if (!Firebase.beginStream(_fbdo, path))
+        if (!Firebase.RTDB.beginStream(&_fbdo, path.c_str()))
         {
-          DEBUG("------------------------------------");
-          DEBUG("Can't begin stream connection...");
-          DEBUG("REASON: " + _fbdo.errorReason());
-          DEBUG("------------------------------------");
-          DEBUG();
+          //Serial.println("------------------------------------");
+          //Serial.println("Can't begin stream connection...");
+          //Serial.println("REASON: " + _fbdo.errorReason());
+          //Serial.println("------------------------------------");
+          //Serial.println();
         }
-        Firebase.setStreamCallback(_fbdo, SimpleFirebase::streamCallback, SimpleFirebase::streamTimeoutCallback);
+        Firebase.RTDB.setStreamCallback(&_fbdo, SimpleFirebase::streamCallback, SimpleFirebase::streamTimeoutCallback);
 
     }
 
