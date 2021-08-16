@@ -1,7 +1,7 @@
 #ifndef SIMPLE_FIREBASE_H
 #define SIMPLE_FIREBASE_H
 
-#include <Firebase_ESP_Client.h>
+#include <FirebaseESP8266.h>
 #include "addons/TokenHelper.h"
 #include "addons/RTDBHelper.h"
 #include <vector>
@@ -41,7 +41,7 @@ struct PathCallback
 /*
 struct SendQuery
 {
-    FirebaseStream *data;
+    StreamData *data;
 };*/
 
 using namespace std;
@@ -77,7 +77,7 @@ private:
 
     static SimpleFirebase *pSingletonInstance;
 
-    static void streamCallback(FirebaseStream data)
+    static void streamCallback(StreamData data)
     {
         if(pSingletonInstance)  pSingletonInstance->_streamCallback(data);
     }
@@ -87,7 +87,7 @@ private:
         if(pSingletonInstance && tout)  pSingletonInstance->_streamTimeoutCallback(tout);
     }
 
-    void _streamCallback(FirebaseStream data)
+    void _streamCallback(StreamData data)
     {
         DEBUG(data.dataPath())
         DEBUG(data.stringData())
@@ -108,7 +108,7 @@ private:
         DEBUG("TIMEOUT")
     }
 
-    void _handleCallbacks(FirebaseStream data)
+    void _handleCallbacks(StreamData data)
     {
         for(PathCallback pc : _pathcalls) 
             {
@@ -177,7 +177,7 @@ private:
             json->iteratorEnd();
         }
     }
-    void _parseJson(FirebaseStream* data)
+    void _parseJson(StreamData* data)
     {
         FirebaseJson* json = data->jsonObjectPtr();
         String commonPath = data->dataPath();
@@ -220,15 +220,15 @@ public:
         Firebase.reconnectWiFi(true);
         _fbdo.setBSSLBufferSize(4096, 4096);//2048, 2048
         _fbdo.setResponseSize(4096);//2048
-        if (!Firebase.RTDB.beginStream(&_fbdo, path.c_str()))
+        if (!Firebase.beginStream(_fbdo, path.c_str()))
         {
-          //Serial.println("------------------------------------");
-          //Serial.println("Can't begin stream connection...");
-          //Serial.println("REASON: " + _fbdo.errorReason());
-          //Serial.println("------------------------------------");
-          //Serial.println();
+          DEBUG("------------------------------------");
+          DEBUG("Can't begin stream connection...");
+          DEBUG("REASON: " + _fbdo.errorReason());
+          DEBUG("------------------------------------");
+          DEBUG();
         }
-        Firebase.RTDB.setStreamCallback(&_fbdo, SimpleFirebase::streamCallback, SimpleFirebase::streamTimeoutCallback);
+        Firebase.setStreamCallback(_fbdo, SimpleFirebase::streamCallback, SimpleFirebase::streamTimeoutCallback);
 
     }
 
