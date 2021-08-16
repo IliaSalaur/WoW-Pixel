@@ -7,9 +7,11 @@
 #include <ESP8266WebServer.h>
 #include <EEPROM.h>
 #include <FS.h>
-#include <Arduino_JSON.h>
+#include <SimpleJsonArray.h>
+//#include <Arduino_JSON.h>
 
-#define EEP_KEY_START 168
+
+#define EEP_KEY_START 169
 #define EEP_KEY_STOP 21
 #define WAIT_FOT_CONNECTION 30 //seconds
 
@@ -65,7 +67,7 @@ private:
     std::unique_ptr<DNSServer> dnsServer;
     std::unique_ptr<ESP8266WebServer> webServer;
 
-    JSONVar _nets;
+    SimpleJsonArray _nets;
 
     void(*funcPtr)() = nullptr;
     bool connected = 0;
@@ -88,7 +90,7 @@ private:
     void handleNets()
     {
         //this->scanWiFi();
-        webServer->send(200, "application/json", JSON.stringify(_nets));
+        webServer->send(200, "application/json", _nets.getString());
     }
 
     void scanWiFi(int n)
@@ -121,22 +123,34 @@ private:
             sorted = 1;
             for(int i = 0; i < s; i++)
             {                                
-                if(i + 1 < s && ssids[i].rssi > ssids[i + 1].rssi)
+                if(i + 1 < s && ssids[i].rssi < ssids[i + 1].rssi)
                 {
                     int8_t rssi = ssids[i].rssi;
+                    String net = ssids[i].ssid;
+
                     ssids[i].rssi = ssids[i + 1].rssi;
+                    ssids[i].ssid = ssids[i + 1].ssid;
+
                     ssids[i + 1].rssi = rssi;
+                    ssids[i + 1].ssid = net;
+
                     sorted = 0;
                 }
             }
         }while(!sorted);
 
-        JSONVar nets;
+#ifdef DEBUG
         for(int i = 0; i < s; i++)
         {
-            nets[i] = ssids[i].ssid;
+            DEBUG(ssids[i].ssid)
         }
-        _nets = nets;
+#endif
+
+        _nets.clear();
+        for(int i = 0; i < s; i++)
+        {
+            _nets.add(ssids[i].ssid);
+        }
     }
 
     void startScan()
