@@ -177,7 +177,7 @@ void loop()
   if(millis() - heapTimer >= 300)
   {
     heapTimer = millis();
-    DEBUG(String("m = ") + String(ESP.getFreeHeap()));
+    //DEBUG(String("m = ") + String(ESP.getFreeHeap()));
   }
   //fb.handle();
   yield();

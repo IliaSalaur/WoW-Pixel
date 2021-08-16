@@ -215,12 +215,13 @@ public:
 
     void begin(FirebaseConfig *config, FirebaseAuth *auth, String path)
     {
-        pSingletonInstance = this;        
+        DEBUG(String("Path is ") + path)
+        pSingletonInstance = this;
         Firebase.begin(config, auth);
         Firebase.reconnectWiFi(true);
         _fbdo.setBSSLBufferSize(4096, 4096);//2048, 2048
         _fbdo.setResponseSize(4096);//2048
-        if (!Firebase.beginStream(_fbdo, path.c_str()))
+        if (!Firebase.beginStream(_fbdo, path))
         {
           DEBUG("------------------------------------");
           DEBUG("Can't begin stream connection...");
