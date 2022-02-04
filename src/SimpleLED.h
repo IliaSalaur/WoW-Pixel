@@ -14,7 +14,7 @@ class SimpleLED
 {
 private:
     uint32_t _leds[_width * _height];
-    shared_ptr<IEffect> _ef;
+    std::shared_ptr<IEffect> _ef;
     //IEffect* _ef;
     Adafruit_NeoPixel *_matrix;
 
@@ -98,7 +98,7 @@ public:
         
     }
 
-    void setEffect(shared_ptr<IEffect> ef)
+    void setEffect(std::shared_ptr<IEffect> ef)
     {
         _ef = ef;
         _ef->setLeds(_leds);

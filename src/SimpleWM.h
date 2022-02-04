@@ -97,7 +97,7 @@ private:
     {
         DEBUG(n);
         DEBUG(millis())
-        vector<WiFiData> ssids;
+        std::vector<WiFiData> ssids;
 
         for(int i = 0; i < n; i++)
         {

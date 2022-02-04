@@ -1,29 +1,28 @@
 #include <Arduino.h>
 #include <Debug.h>
 #include "Config.h"
-#include <SimpleFirebase.h>
+#include "SimpleFirebase/SimpleFirebase.h"
 #include <SimpleLED.h>
 #include <ESP8266WiFi.h>
 #include <GParser.h>
 #include <bitmap.h>
 #include <SimpleWM.h>
+#include "SimpleFirebase/TinyJsonFinal.h"
 
 #define USE_WM
 
-FirebaseAuth auth;
-FirebaseConfig config;
-SimpleFirebase fb;
+SimpleFirebase fb("wowpixel-test1-default-rtdb.firebaseio.com", "qpSkriFCNOO1ovNWkiFYKiLAl2DDBLpeDl8ps6TO");
 SimpleLED<16, 8, D2> matrix;
 
-shared_ptr<Text> text(new Text());
-shared_ptr<Text> digits(new Text());
-shared_ptr<Painter> painter(new Painter());
+std::shared_ptr<Text> text(new Text());
+std::shared_ptr<Text> digits(new Text());
+std::shared_ptr<Painter> painter(new Painter());
 
-int caseNum = 0;
-
-void caseCallback(PathData data)
+void caseCallback(const char* data)
 {
-  caseNum = data.data.toInt();
+  int caseNum = atoi(TinyJson::value(data).c_str());
+  DEBUG(data)
+  DEBUG(caseNum)
   switch(caseNum)
   {
   case 0:
@@ -44,84 +43,27 @@ void caseCallback(PathData data)
   }
 }
 
-void brightnessCallback(PathData data)
+void drawCallback(const char* data)
 {
-  matrix.setBrightness(data.data.toInt());
-}
-
-void textCallback(PathData data)
-{  
-  DEBUG("Text callback called")   
-  text->setText(data.data);
-  DEBUG(data.data) 
-}
-
-void digitsCallback(PathData data)
-{  
-  DEBUG("Digits callback called")   
-  digits->setText(data.data);
-  DEBUG(data.data) 
-}
-
-void digitsColCallback(PathData data)
-{
-  digits->setLetterColor(strtoul(data.data.substring(1).c_str(), NULL, 16));
-  DEBUG("Digits color changed");
-}
-
-void digitsBackColCallback(PathData data)
-{
-  digits->setBackgroundColor(strtoul(data.data.substring(1).c_str(), NULL, 16));
-  DEBUG("Digits Back color changed");
-}
-
-void scrollCallback(PathData data)
-{
-  DEBUG("Scroll callback called")
-  text->setScrollTimes(data.data.toInt());
-  DEBUG(data.data.toInt())
-}
-
-void drawCallback(PathData data)
-{
-  int ledNum = data.path.substring(11).toInt();
-  painter->draw(ledNum, data.data);
+  int ledNum = atoi(TinyJson::path(data).c_str() + 11);
+  painter->draw(ledNum, TinyJson::value(data).c_str());
   DEBUG(String("DrawCallback: ") + String(ledNum)/* + String(" ") + String(colHex)*/)
-}
-
-void textColCallback(PathData data)
-{
-  text->setLetterColor(strtoul(data.data.substring(1).c_str(), NULL, 16));
-  DEBUG("Text color changed");
-}
-
-void backColCallback(PathData data)
-{
-  text->setBackgroundColor(strtoul(data.data.substring(1).c_str(), NULL, 16));
-  DEBUG("Back color changed");
 }
 
 void initFB()
 {
-  config.api_key = API_KEY;
-  auth.user.email = USER_EMAIL;
-  auth.user.password = USER_PASSWORD;
-  config.database_url = DATABASE_URL;
-  config.token_status_callback = tokenHandler; 
-
-  fb.on(String("/Matrix/"), drawCallback);
-  fb.on(String("/Control/Text/Text"), textCallback);
-  fb.on(String("/Control/Text/Scroll"), scrollCallback);
-  fb.on(String("/Case/Case"), caseCallback);
-  fb.on(String("/Control/Brig"), brightnessCallback);
-  fb.on(String("/Control/Text/Color"), textColCallback);
-  fb.on(String("/Control/Text/BackColor"), backColCallback);
-  fb.on(String("/Control/Digits/Color"), digitsColCallback);
-  fb.on(String("/Control/Digits/BackColor"), digitsBackColCallback);
-  fb.on(String("/Control/Digits/Text"), digitsCallback);
-  fb.begin(&config, &auth, PATH);
-
-  Serial.printf("Firebase Client v%s\n\n", FIREBASE_CLIENT_VERSION);
+  fb.on("/Matrix/Led", drawCallback);
+  fb.on("/Control/Text/Text", [](const char* data){text->setText(TinyJson::value(data).c_str());});
+  fb.on("/Control/Text/Scroll", [](const char* data){text->setScrollTimes(atoi(TinyJson::value(data).c_str()));});
+  fb.on("/Case/Case", caseCallback);
+  fb.on("/Control/Brig", [](const char* data){matrix.setBrightness(atoi(TinyJson::value(data).c_str()));});
+  fb.on("/Control/Text/Color", [](const char* data){text->setLetterColor(strtoul(TinyJson::value(data).c_str() + 1, NULL, 16));});
+  fb.on("/Control/Text/BackColor", [](const char* data){text->setBackgroundColor(strtoul(TinyJson::value(data).c_str() + 1, NULL, 16));});
+  fb.on("/Control/Digits/Color", [](const char* data){digits->setLetterColor(strtoul(TinyJson::value(data).c_str() + 1, NULL, 16));});
+  fb.on("/Control/Digits/BackColor", [](const char* data){digits->setBackgroundColor(strtoul(TinyJson::value(data).c_str() + 1, NULL, 16));});
+  fb.on("/Control/Digits/Text", [](const char* data){digits->setText(TinyJson::value(data).c_str());});
+  Serial.println(fb.begin());
+  fb.beginStream(PATH);
 }
 
 void initWiFi()
@@ -141,6 +83,8 @@ void initWiFi()
   matrix.drawBitmap<8, 8>(okBitmap);
   //delay(1500);
 #endif
+  WiFi.setAutoReconnect(true);
+  WiFi.persistent(true);
 }
 
 void initMatrix()
@@ -164,34 +108,16 @@ void setup()
   randomSeed(micros());
 
   digits->setY((NUM_LEDS == 64) ? 0:0);//1:0
-  digits->onlyDigits(1);
+  digits->onlyDigits(true);
 
   initWiFi();
-  delay(100);
+  delay(200);
   initFB();  
 }
 
 void loop()
 {
-  static uint32_t heapTimer = 0;
-  if(millis() - heapTimer >= 300)
-  {
-    heapTimer = millis();
-    //DEBUG(String("m = ") + String(ESP.getFreeHeap()));
-  }
-  //fb.handle();
-  yield();
   matrix.handle(); 
-  yield();
-/*
-  if(Serial.available())
-  {
-    sp = Serial.parseInt();
-    while (Serial.available())
-    {
-      Serial.read();
-    }
-    
-  }*/
+  fb.handle();
 }
 
