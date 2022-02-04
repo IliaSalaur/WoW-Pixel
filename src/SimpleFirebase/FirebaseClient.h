@@ -16,11 +16,11 @@ class FirebaseClient
 protected:
     const char* _token;
     const char* _host;
-    void(*_onMessageCallback)(DynamicJsonDocument&);
+    void(*_onMessageCallback)(char*);
     
 public:
     FirebaseClient(const char* host, const char* token) : _host(host), _token(token){}
-    virtual void onReceive(void(*cb)(DynamicJsonDocument&)) = 0;
+    virtual void onReceive(void(*cb)(char*)) = 0;
     virtual bool begin() = 0;
     virtual void handle() = 0;
     virtual bool beginStream(const char* path) = 0;
@@ -76,23 +76,23 @@ public:
             if(TinyJson::getIndexOf(buf, "data") == 0)
             {
                 Dln(buf);
-                //SmartArray<char> json(3000);
-                //TinyJson::createJson(buf + 6, json, 3000);
-                DynamicJsonDocument doc(3096);
-                DeserializationError error = deserializeJson(doc, buf + 6);                
-                if (error) {
-                    Serial.print(F("deserializeJson() failed: "));
-                    Serial.println(error.c_str());
-                }
+                SmartArray<char> json(3000);
+                TinyJson::createJson(buf + 6, json, 3000);
+                //DynamicJsonDocument doc(3096);
+                //DeserializationError error = deserializeJson(doc, buf + 6);                
+                //if (error) {
+                //    Serial.print(F("deserializeJson() failed: "));
+                //    Serial.println(error.c_str());
+                //}
                 buf.clearHeap();
-                _onMessageCallback(doc);
-                //json.clearHeap();
+                _onMessageCallback(json);
+                json.clearHeap();
             }
             else buf.clearHeap();
         }
     }
 
-    void onReceive(void(*cb)(DynamicJsonDocument&)) override
+    void onReceive(void(*cb)(char*)) override
     {
         _onMessageCallback = cb;
     }

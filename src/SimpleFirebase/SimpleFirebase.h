@@ -118,7 +118,7 @@ public:
 
     bool begin()
     {
-        _client->onReceive(SimpleFirebase::onMsgCbJson);
+        _client->onReceive(SimpleFirebase::onMsgCb);
         return _client->begin();
     }
 

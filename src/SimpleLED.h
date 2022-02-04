@@ -29,13 +29,16 @@ public:
 
     SimpleLED()
     {
-        _matrix = new Adafruit_NeoPixel(_width * _height, pin, NEO_GRB + NEO_KHZ800);
+        _matrix = new Adafruit_NeoPixel(_width * _height, pin, NEO_RGB + NEO_KHZ800);
+        _matrix->clear();
+        _matrix->setBrightness(5);
         _ef.reset();
     }
 
     void begin()
     {
         _matrix->begin();
+        _matrix->setBrightness(5);
         _matrix->clear();
         #ifdef DEBUG_CORRECTION
         DEBUG(_matrix->rOffset)
