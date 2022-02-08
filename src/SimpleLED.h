@@ -5,6 +5,9 @@
 #include <Effects/EffectsFactory.h>
 #include <VirtualMatrix.h>
 
+#define INITIAL_BRIGHTNESS 30
+#define COLOR_SCHEME NEO_GRB
+
 
 //#define DEBUG_CORRECTION
 #define ASYNC_MODE
@@ -29,9 +32,9 @@ public:
 
     SimpleLED()
     {
-        _matrix = new Adafruit_NeoPixel(_width * _height, pin, NEO_RGB + NEO_KHZ800);
+        _matrix = new Adafruit_NeoPixel(_width * _height, pin, COLOR_SCHEME + NEO_KHZ800);
         _matrix->clear();
-        _matrix->setBrightness(5);
+        _matrix->setBrightness(INITIAL_BRIGHTNESS);
         _ef.reset();
     }
 
@@ -128,20 +131,16 @@ public:
     {
         int s_x = (_width -_bitmapW) / 2;
         int s_y = _height - _bitmapH;   
-        this->clear();
-        for(int x = 0; x < _bitmapW; x++)
-        {
-            for(int y = 0; y < _bitmapH; y++)
-            {
-                if(s_x + x < _width && s_y + y < _height)
-                {
-                    _leds[XY(_width, _height, x + s_x, y + s_y)] = bitmap[x][y];
-                }                
-            }
-        } 
-        this->handle();
-        _ef.reset();
+        this->drawBitmap<_bitmapW, _bitmapH>(bitmap, s_x, s_y);
     }
+
+    // template<uint8_t _bitmapW, uint8_t _bitmapH>
+    // void drawBitmapP(const uint32_t bitmap[_bitmapW][_bitmapH])
+    // {
+    //     int s_x = (_width -_bitmapW) / 2;
+    //     int s_y = _height - _bitmapH;   
+    //     this->drawBitmap<_bitmapW, _bitmapH>(bitmap, s_x, s_y);
+    // }
 
     void drawBitmap(const uint32_t bitmap[64])
     {

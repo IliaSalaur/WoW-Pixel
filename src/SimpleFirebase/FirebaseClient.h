@@ -6,7 +6,6 @@
 #include <WiFiClientSecureBearSSL.h>
 #include "TinyJsonFinal.h"
 #include "SmartArray.h"
-#include <ArduinoJson.h>
 
 static const uint16_t bearssl_client_timeout = 5000;
 static const uint16_t bearssl_client_buffersize = 4096;//2048;
@@ -17,10 +16,12 @@ protected:
     const char* _token;
     const char* _host;
     void(*_onMessageCallback)(char*);
+    void(*_onDisconnectCallback)();
     
 public:
-    FirebaseClient(const char* host, const char* token) : _host(host), _token(token){}
+    FirebaseClient(const char* host, const char* token) : _host(host), _token(token), _onMessageCallback(nullptr), _onDisconnectCallback(nullptr){}
     virtual void onReceive(void(*cb)(char*)) = 0;
+    virtual void onDisconnect(void(*cb)()) = 0;
     virtual bool begin() = 0;
     virtual void handle() = 0;
     virtual bool beginStream(const char* path) = 0;
@@ -32,7 +33,7 @@ public:
 class FirebaseClientImpl : public FirebaseClient
 {
 private:
-    WiFiClientSecure _client;
+    std::unique_ptr<WiFiClientSecure> _client;
 public:
     FirebaseClientImpl(const char* host, const char* token) : FirebaseClient(host, token){}
 
@@ -40,11 +41,11 @@ public:
     {
         Dln(_host)
         Dln(_token)
-
-        _client.setInsecure();
-        _client.setNoDelay(true);
-        _client.setTimeout(bearssl_client_timeout);
-        return _client.connect(_host, 443);
+        _client.reset(new WiFiClientSecure);
+        _client->setInsecure();
+        _client->setNoDelay(true);
+        _client->setTimeout(bearssl_client_timeout);
+        return _client->connect(_host, 443);
     }
 
     bool beginStream(const char* path) override
@@ -59,25 +60,31 @@ public:
         strcat(h, _host);
         strcat(h, "\r\n");
 
-        _client.print(s); //GET request with auth
-        _client.print(h); //Host header
-        _client.print("Accept: text/event-stream\r\n");
-        _client.print("Connection: keep-alive\r\n\r\n");
+        _client->print(s); //GET request with auth
+        _client->print(h); //Host header
+        _client->print("Accept: text/event-stream\r\n");
+        _client->print("Connection: keep-alive\r\n\r\n");
 
         return true; // hard code, should return real state of stream begining
     }
 
     void handle() override
     {
-        if(_client.available() && _onMessageCallback)
+        if(_client->available() && _onMessageCallback)
         {
             SmartArray<char> buf(bearssl_client_buffersize);
-            _client.readBytesUntil('\n', buf, bearssl_client_buffersize);
+            _client->readBytesUntil('\n', buf, bearssl_client_buffersize);
             if(TinyJson::getIndexOf(buf, "data") == 0)
             {
                 Dln(buf);
                 SmartArray<char> json(3000);
-                TinyJson::createJson(buf + 6, json, 3000);
+                char initialPath[16] = {0};
+                int pI = TinyJson::getIndexOf(buf + 6, "path");
+                if(pI != -1)
+                {
+                    strncpy(initialPath, buf + 6 + pI + 7, TinyJson::getIndexOf(buf + 6, "\",", pI + 6) - pI - 7);
+                }
+                TinyJson::createJson(buf + 6, json, 3000, initialPath);
                 //DynamicJsonDocument doc(3096);
                 //DeserializationError error = deserializeJson(doc, buf + 6);                
                 //if (error) {
@@ -90,11 +97,22 @@ public:
             }
             else buf.clearHeap();
         }
+
+        if(!_client->connected())
+        {
+            Dln("Disconnected")
+            if(_onDisconnectCallback) _onDisconnectCallback();
+        }
     }
 
     void onReceive(void(*cb)(char*)) override
     {
         _onMessageCallback = cb;
+    }
+
+    void onDisconnect(void(*cb)()) override
+    {
+        _onDisconnectCallback = cb;
     }
 
     void requestData(const char* path)
@@ -109,10 +127,10 @@ public:
         strcat(h, _host);
         strcat(h, "\r\n");
 
-        _client.print(s); //GET request with auth
-        _client.print(h); //Host header
-        _client.print("Accept: application/\r\n");
-        _client.print("Connection: keep-alive\r\n\r\n");
+        _client->print(s); //GET request with auth
+        _client->print(h); //Host header
+        _client->print("Accept: application/\r\n");
+        _client->print("Connection: keep-alive\r\n\r\n");
     }
     
 

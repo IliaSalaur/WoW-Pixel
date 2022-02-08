@@ -9,10 +9,12 @@
 
 #define FB_DEBUG
 #ifdef FB_DEBUG
+#define Fm(x...) Serial.printf(x);
 #define D(x)  Serial.print(x);
 #define Dln(x) Serial.print("FB_DEB: ");  Serial.println(x); Serial.flush();
 #define Line() Serial.println(__LINE__);
 #else 
+#define Fm(x)
 #define D(x)
 #define Dln(x)
 #endif
@@ -20,88 +22,99 @@
 class TinyJson
 {
 public:
-    static void oneLapDeserialization(char* jsonStr, char* buf, const char* path)
+    static void oneLapDeserialization(char* jsonStr, char* buf, char* path)
     {
         size_t len = strlen(jsonStr);
-        //Dln(len)
+        // char basepath[16] = {0};
+        // static bool founded = 0;
         if(jsonStr[0] == '{' && jsonStr[len-1] == '}')
-        for(size_t i = 0; i < len-2; i++)
         {
-            size_t kStartI = i;
-            size_t kStopI = 0;
-            
-            kStopI = getIndexOf(jsonStr, "\":", i);
-            kStartI = getIndexOf(jsonStr, "\"", kStopI-1, 0);
-            
-            SmartArray<char> key(kStopI-kStartI+1);
-            strncpy(key, jsonStr + kStartI + 1, kStopI - kStartI - 1);
+            // if(TinyJson::path(buf)[0] != '\2')
+            // {
+            //     strcpy(basepath, path);
+            //     founded = 1;
+            // }
+            // else if(!founded)
+            // {
+            //     strcpy(basepath, TinyJson::path(buf).c_str());
+            // }
+            for(size_t i = 0; i < len-2; i++)
+            {
+                size_t kStartI = i;
+                size_t kStopI = 0;
+                
+                kStopI = getIndexOf(jsonStr, "\":", i);
+                kStartI = getIndexOf(jsonStr, "\"", kStopI-1, 0);
+                
+                SmartArray<char> key(kStopI-kStartI+1);
+                strncpy(key, jsonStr + kStartI + 1, kStopI - kStartI - 1);
 
-            //VALUE
-            int vStartI = kStopI+2;
-            int vStopI = 0, valStrEnd = vStartI, t1, t2;
-            bool ignoreCitate = false;
-            if(jsonStr[vStartI] == '\"')
-            {
-                valStrEnd = getIndexOf(jsonStr, "\"", vStartI+1);
-                t1 = getIndexOf(jsonStr, ",", valStrEnd);
-                t2 = getIndexOf(jsonStr, "}", valStrEnd);
-            
-                vStopI = (t1 > -1) ? t1:t2;   
-                ignoreCitate = true;
-            }
-            else if(jsonStr[vStartI] == '{')
-            {
-                int braces = 1;
-                int j = vStartI + 1;
-                while(braces != 0)
+                //VALUE
+                int vStartI = kStopI+2;
+                int vStopI = 0, valStrEnd = vStartI, t1, t2;
+                bool ignoreCitate = false;
+                if(jsonStr[vStartI] == '\"')
                 {
-                    if(jsonStr[j] == '}')
-                    {
-                        braces--;
-                    }
-                    else if(jsonStr[j] == '{')
-                    {
-                        braces++;
-                    }
-                    j++;
+                    valStrEnd = getIndexOf(jsonStr, "\"", vStartI+1);
+                    t1 = getIndexOf(jsonStr, ",", valStrEnd);
+                    t2 = getIndexOf(jsonStr, "}", valStrEnd);
+                
+                    vStopI = (t1 > -1) ? t1:t2;   
+                    ignoreCitate = true;
                 }
-                vStopI = j;
-            }
-            else
-            {
-                t1 = getIndexOf(jsonStr, ",", valStrEnd);
-                t2 = getIndexOf(jsonStr, "}", valStrEnd);
-            
-                vStopI = (t1 > -1) ? t1:t2;   
-            }
-            
-            SmartArray<char> value(vStopI-vStartI+1);
-            strncpy(value, jsonStr + vStartI + int(ignoreCitate), vStopI - vStartI - ((ignoreCitate) ? 2:0));
-            i = vStopI;
-
-            switch (value[0])
-            {
-            case '{':
+                else if(jsonStr[vStartI] == '{')
                 {
-                    char allPath[64] = "";
-                    strcat(allPath, path);
-                    strcat(allPath, "/");
-                    strcat(allPath, key);
-                    oneLapDeserialization(value, buf, allPath);
+                    int braces = 1;
+                    int j = vStartI + 1;
+                    while(braces != 0)
+                    {
+                        if(jsonStr[j] == '}')
+                        {
+                            braces--;
+                        }
+                        else if(jsonStr[j] == '{')
+                        {
+                            braces++;
+                        }
+                        j++;
+                    }
+                    vStopI = j;
+                }
+                else
+                {
+                    t1 = getIndexOf(jsonStr, ",", valStrEnd);
+                    t2 = getIndexOf(jsonStr, "}", valStrEnd);
+                
+                    vStopI = (t1 > -1) ? t1:t2;   
+                }
+                
+                SmartArray<char> value(vStopI-vStartI+1);
+                strncpy(value, jsonStr + vStartI + int(ignoreCitate), vStopI - vStartI - ((ignoreCitate) ? 2:0));
+                i = vStopI;
 
-                }break;
-            
-            default:
-                strcat(buf, path);
-                strcat(buf, "/");
-                strcat(buf, key);
-                strcat(buf, "\t");
-                strcat(buf, value);
-                strcat(buf, "\n"); 
-                break;
+                switch (value[0])
+                {
+                case '{':
+                    {
+                        char allPath[64] = "";
+                        strcat(allPath, path);                        
+                        if(!strstr("/data", key)) {Dln(key)strcat(allPath, "/"); strcat(allPath, key);}
+                        oneLapDeserialization(value, buf, allPath);
+
+                    }break;
+                
+                default:
+                    strcat(buf, path);
+                    strcat(buf, "/");
+                    strcat(buf, key);
+                    strcat(buf, "\t");
+                    strcat(buf, value);
+                    strcat(buf, "\n"); 
+                    break;
+                }
+                value.clearHeap();
+                key.clearHeap();
             }
-            value.clearHeap();
-            key.clearHeap();
         }
         //else //Dln("FAIL");
     }
@@ -213,10 +226,10 @@ public:
         path.clearHeap();
     }
 
-    static void createJson(char* json, char* buf, size_t s)
+    static void createJson(char* json, char* buf, size_t s, char* path = "")
     {
         memset(buf, 0, s);
-        oneLapDeserialization(json, buf, "");
+        oneLapDeserialization(json, buf, path);
         //pathPrep(json, s);
     }
     
@@ -309,5 +322,6 @@ public:
     }
     //#error "Fix the parsing of patch request."
 };
+
 
 #endif
