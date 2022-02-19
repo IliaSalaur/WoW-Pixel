@@ -62,7 +62,7 @@ void initFB()
   fb.on("/Control/Digits/Color", [](const char* data){digits->setLetterColor(strtoul(TinyJson::value(data).c_str() + 1, NULL, 16));});
   fb.on("/Control/Digits/BackColor", [](const char* data){digits->setBackgroundColor(strtoul(TinyJson::value(data).c_str() + 1, NULL, 16));});
   fb.on("/Control/Digits/Text", [](const char* data){digits->setText(TinyJson::value(data).c_str());});
-  Fm("Connect%s", fb.begin() ? "ed":"ion failed");
+  Serial.printf("Connect%s", fb.begin() ? "ed":"ion failed");
   fb.beginStream(PATH);
   fb.getClient().onDisconnect(initFB);
 }
@@ -86,7 +86,7 @@ void initWiFi()
 #endif
   WiFi.setAutoReconnect(true);
   WiFi.persistent(true);
-  // WiFi.onStationModeConnected(
+  //WiFi.onStationModeConnected(
   //   [](const WiFiEventStationModeConnected&){
       
   // );
@@ -112,7 +112,7 @@ void setup()
 
   randomSeed(micros());
 
-  digits->setY((NUM_LEDS == 64) ? 0:0);//1:0
+  digits->setY(0);//1:0
   digits->onlyDigits(true);
 
   initWiFi();
@@ -124,5 +124,9 @@ void loop()
 {
   matrix.handle(); 
   fb.handle();
+  if(Serial.available() && Serial.read() == 'd')
+  {
+    WiFi.reconnect();
+  }
 }
 

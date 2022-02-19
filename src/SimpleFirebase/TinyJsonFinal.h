@@ -7,16 +7,16 @@
 #include <Arduino.h>
 #include <string>
 
-#define FB_DEBUG
 #ifdef FB_DEBUG
 #define Fm(x...) Serial.printf(x);
 #define D(x)  Serial.print(x);
 #define Dln(x) Serial.print("FB_DEB: ");  Serial.println(x); Serial.flush();
 #define Line() Serial.println(__LINE__);
 #else 
-#define Fm(x)
+#define Fm(x...)
 #define D(x)
 #define Dln(x)
+#define Line()
 #endif
 
 class TinyJson

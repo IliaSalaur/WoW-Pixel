@@ -13,7 +13,7 @@
 
 #define EEP_KEY_START 169
 #define EEP_KEY_STOP 21
-#define WAIT_FOT_CONNECTION 30 //seconds
+#define WAIT_FOT_CONNECTION 15 //seconds
 
 #define HTML_SIZE 204
 const char* htmlP PROGMEM ="<!DOCTYPE html> <html > <head> <title>WowPixel</title> </head> </body> </html> <script> window.document.onload = redirect(); function redirect() { location.replace(\"/\"); console.log(\"redir\"); } </script>";

@@ -7,6 +7,7 @@
 #include "TinyJsonFinal.h"
 #include "SmartArray.h"
 
+static const uint16_t bearssl_client_reconnect_timeout = 5000;
 static const uint16_t bearssl_client_timeout = 5000;
 static const uint16_t bearssl_client_buffersize = 4096;//2048;
 
@@ -33,15 +34,16 @@ public:
 class FirebaseClientImpl : public FirebaseClient
 {
 private:
-    std::unique_ptr<WiFiClientSecure> _client;
+    WiFiClientSecure* _client;
+    bool _reconnecting;
 public:
-    FirebaseClientImpl(const char* host, const char* token) : FirebaseClient(host, token){}
+    FirebaseClientImpl(const char* host, const char* token) : FirebaseClient(host, token), _reconnecting(false), _client(new WiFiClientSecure){}
 
     bool begin()
     {
         Dln(_host)
         Dln(_token)
-        _client.reset(new WiFiClientSecure);
+        _client->stop();
         _client->setInsecure();
         _client->setNoDelay(true);
         _client->setTimeout(bearssl_client_timeout);
@@ -70,6 +72,13 @@ public:
 
     void handle() override
     {
+        static uint32_t _reconnectTimer = millis();
+        if(_reconnecting && millis() - _reconnectTimer > bearssl_client_reconnect_timeout)
+        {
+            _reconnectTimer = millis();
+            _reconnecting = 0;
+        }
+
         if(_client->available() && _onMessageCallback)
         {
             SmartArray<char> buf(bearssl_client_buffersize);
@@ -98,10 +107,11 @@ public:
             else buf.clearHeap();
         }
 
-        if(!_client->connected())
+        if(!_client->connected() && !_reconnecting)
         {
             Dln("Disconnected")
             if(_onDisconnectCallback) _onDisconnectCallback();
+            _reconnecting = true;
         }
     }
 
