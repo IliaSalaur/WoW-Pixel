@@ -87,19 +87,13 @@ public:
             {
                 Dln(buf);
                 SmartArray<char> json(3000);
-                char initialPath[16] = {0};
+                char initialPath[64] = {0};
                 int pI = TinyJson::getIndexOf(buf + 6, "path");
                 if(pI != -1)
                 {
                     strncpy(initialPath, buf + 6 + pI + 7, TinyJson::getIndexOf(buf + 6, "\",", pI + 6) - pI - 7);
                 }
                 TinyJson::createJson(buf + 6, json, 3000, initialPath);
-                //DynamicJsonDocument doc(3096);
-                //DeserializationError error = deserializeJson(doc, buf + 6);                
-                //if (error) {
-                //    Serial.print(F("deserializeJson() failed: "));
-                //    Serial.println(error.c_str());
-                //}
                 buf.clearHeap();
                 _onMessageCallback(json);
                 json.clearHeap();

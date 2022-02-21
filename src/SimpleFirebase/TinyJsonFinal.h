@@ -25,19 +25,8 @@ public:
     static void oneLapDeserialization(char* jsonStr, char* buf, char* path)
     {
         size_t len = strlen(jsonStr);
-        // char basepath[16] = {0};
-        // static bool founded = 0;
         if(jsonStr[0] == '{' && jsonStr[len-1] == '}')
         {
-            // if(TinyJson::path(buf)[0] != '\2')
-            // {
-            //     strcpy(basepath, path);
-            //     founded = 1;
-            // }
-            // else if(!founded)
-            // {
-            //     strcpy(basepath, TinyJson::path(buf).c_str());
-            // }
             for(size_t i = 0; i < len-2; i++)
             {
                 size_t kStartI = i;
@@ -98,7 +87,7 @@ public:
                     {
                         char allPath[64] = "";
                         strcat(allPath, path);                        
-                        if(!strstr("/data", key)) {Dln(key)strcat(allPath, "/"); strcat(allPath, key);}
+                        if(!strstr("/data", key)) {Dln(key) strcat(allPath, "/"); strcat(allPath, key);}
                         oneLapDeserialization(value, buf, allPath);
 
                     }break;
@@ -241,7 +230,7 @@ public:
         int vStopI = getIndexOf(json, "\n", kStopI);
         if(kStartI == -1 || kStopI == -1 || vStopI == -1)
         {
-            strcpy(buf, "\2");
+            strcpy(buf, "\077");
             return;
         }
         strncpy(buf, json + kStopI + 1, vStopI - kStopI - 1);
@@ -255,7 +244,7 @@ public:
         int vStopI = getIndexOf(json, "\n", kStopI);
         if(kStartI == -1 || kStopI == -1 || vStopI == -1)
         {
-            strcpy(buf, "\2");
+            strcpy(buf, "\077");
             return;
         }
         strncpy(buf, json + kStopI + 1, vStopI - kStopI - 1);
