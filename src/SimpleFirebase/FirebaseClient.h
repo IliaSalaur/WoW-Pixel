@@ -87,7 +87,7 @@ public:
             {
                 Dln(buf);
                 SmartArray<char> json(3000);
-                char initialPath[64] = {0};
+                char initialPath[128] = {0};
                 int pI = TinyJson::getIndexOf(buf + 6, "path");
                 if(pI != -1)
                 {

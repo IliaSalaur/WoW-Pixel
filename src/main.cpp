@@ -11,7 +11,7 @@
 
 #define USE_WM
 
-SimpleFirebase fb("wowpixel-test1-default-rtdb.firebaseio.com", "qpSkriFCNOO1ovNWkiFYKiLAl2DDBLpeDl8ps6TO");
+SimpleFirebase fb(DATABASE_URL, API_KEY);
 SimpleLED<16, 8, D2> matrix;
 
 std::shared_ptr<Text> text(new Text());
