@@ -3,21 +3,25 @@
 
 #include <stdio.h>
 #include <string.h>
-#include "SmartArray.h"
 #include <Arduino.h>
 #include <string>
+#include <memory>
 
 #ifdef FB_DEBUG
 #define Fm(x...) Serial.printf(x);
-#define D(x)  Serial.print(x);
-#define Dln(x) Serial.print("FB_DEB: ");  Serial.println(x); Serial.flush();
 #define Line() Serial.println(__LINE__);
 #else 
 #define Fm(x...)
-#define D(x)
-#define Dln(x)
 #define Line()
 #endif
+
+//Constants
+namespace TinyJsonConfig{
+    const uint8_t k_value_size = 96;
+    const uint8_t k_path_size = 128;
+    const uint8_t k_node_size = k_value_size + k_path_size;
+    const char * k_fail = "?"; //if an operation fails (getValue, getPath, getNode), the k_fail wil be returned
+}
 
 class TinyJson
 {
@@ -35,8 +39,9 @@ public:
                 kStopI = getIndexOf(jsonStr, "\":", i);
                 kStartI = getIndexOf(jsonStr, "\"", kStopI-1, 0);
                 
-                SmartArray<char> key(kStopI-kStartI+1);
-                strncpy(key, jsonStr + kStartI + 1, kStopI - kStartI - 1);
+                auto key = std::make_unique<char[]>(kStopI-kStartI+1);
+                key.get()[0] = 0;
+                strncpy(key.get(), jsonStr + kStartI + 1, kStopI - kStartI - 1);
 
                 //VALUE
                 int vStartI = kStopI+2;
@@ -77,35 +82,34 @@ public:
                     vStopI = (t1 > -1) ? t1:t2;   
                 }
                 
-                SmartArray<char> value(vStopI-vStartI+1);
-                strncpy(value, jsonStr + vStartI + int(ignoreCitate), vStopI - vStartI - ((ignoreCitate) ? 2:0));
+                auto value = std::make_unique<char[]>(vStopI-vStartI+1);
+                value.get()[0] = 0;
+                strncpy(value.get(), jsonStr + vStartI + int(ignoreCitate), vStopI - vStartI - ((ignoreCitate) ? 2:0));                
                 i = vStopI;
 
-                switch (value[0])
+                switch (value.get()[0])
                 {
                 case '{':
                     {
-                        char allPath[64] = "";
-                        strcat(allPath, path);                        
-                        if(!strstr("/data", key)) {Dln(key) strcat(allPath, "/"); strcat(allPath, key);}
-                        oneLapDeserialization(value, buf, allPath);
+                        auto allPath = std::make_unique<char[]>(TinyJsonConfig::k_path_size);
+                        allPath.get()[0] = 0;
+                        strcat(allPath.get(), path);                        
+                        if(!strstr("/data", key.get())) {strcat(allPath.get(), "/"); strcat(allPath.get(), key.get());}
+                        oneLapDeserialization(value.get(), buf, allPath.get());
 
                     }break;
                 
                 default:
                     strcat(buf, path);
                     strcat(buf, "/");
-                    strcat(buf, key);
+                    strcat(buf, key.get());
                     strcat(buf, "\t");
-                    strcat(buf, value);
+                    strcat(buf, value.get());
                     strcat(buf, "\n"); 
                     break;
                 }
-                value.clearHeap();
-                key.clearHeap();
             }
         }
-        //else //Dln("FAIL");
     }
 
     static uint16_t countSize(const char* jsonStr)
@@ -176,7 +180,7 @@ public:
         else stop = strLen;
 
         
-        for(size_t i = start; (step == -1) ? (i > stop):(i < stop); i += step)
+        for(int i = start; (step == -1) ? (i > stop):(i < stop); i += step)
         {
             if(str[i] == find[0])
             {
@@ -198,12 +202,12 @@ public:
         return -1;
     }
 
-    static void pathPrep(char* json, size_t s)
+    static void pathPrep(char* json, size_t s)//SmartArray
     {
-        SmartArray<char> path(64);
+        char path[TinyJsonConfig::k_path_size];
         getValue("/path", json, path);
         if(strlen(path) < 5) return;
-        SmartArray<char> data(32);
+        char data[TinyJsonConfig::k_value_size];
         getValue("/data", json, data);
         memset(json, 0, s);
 
@@ -211,11 +215,11 @@ public:
         strcat(json, "\t");
         strcat(json, data);
         strcat(json, "\n"); 
-        data.clearHeap();
-        path.clearHeap();
+        // data.clearHeap();
+        // path.clearHeap();
     }
 
-    static void createJson(char* json, char* buf, size_t s, char* path = "")
+    static void createJson(char* json, char* buf, size_t s, char* path = {0})
     {
         memset(buf, 0, s);
         oneLapDeserialization(json, buf, path);
@@ -224,13 +228,13 @@ public:
     
     static void getValue(const char* key, const char* json, char* buf)
     {
-        memset(buf, 0, 64);
+        memset(buf, 0, TinyJsonConfig::k_value_size);
         int kStartI = getIndexOf(json, key);
         int kStopI = getIndexOf(json, "\t", kStartI);
         int vStopI = getIndexOf(json, "\n", kStopI);
         if(kStartI == -1 || kStopI == -1 || vStopI == -1)
         {
-            strcpy(buf, "\077");
+            strcpy(buf, TinyJsonConfig::k_fail);
             return;
         }
         strncpy(buf, json + kStopI + 1, vStopI - kStopI - 1);
@@ -238,13 +242,13 @@ public:
 
     static void getValue(const char* key, char* json, char* buf)
     {
-        memset(buf, 0, 64);
+        memset(buf, 0, TinyJsonConfig::k_value_size);
         int kStartI = getIndexOf(json, key);
         int kStopI = getIndexOf(json, "\t", kStartI);
         int vStopI = getIndexOf(json, "\n", kStopI);
         if(kStartI == -1 || kStopI == -1 || vStopI == -1)
         {
-            strcpy(buf, "\077");
+            strcpy(buf, TinyJsonConfig::k_fail);
             return;
         }
         strncpy(buf, json + kStopI + 1, vStopI - kStopI - 1);
@@ -264,50 +268,41 @@ public:
     //     return s;
     // }
 
-    static std::string path(const char* json)
+    static std::string path(const char* json)//SmartArray
     {
-        SmartArray<char> buf(64);
+        char buf[TinyJsonConfig::k_path_size]{0};
         getValue("/path", json, buf);
         std::string s;
         s += buf;
-        buf.clearHeap();
+        // buf.clearHeap();
         return s;
     }
 
     static std::string value(const char* json)
     {
-        SmartArray<char> buf(64);
+        char buf[TinyJsonConfig::k_value_size]{0};
         getValue("/data", json, buf);
         std::string s;
         s += buf;
-        buf.clearHeap();
+        // buf.clearHeap();
         return s;
     }
 
-    static std::string getNode(const char* json, const char* nodePath, int index = 0)
+    static void getNode(const char* json, const char* nodePath, char* nodeBuf, int index = 0)
     {
-        char* buf = new char[64];
-        memset(buf, 0 ,64);
+        char buf[TinyJsonConfig::k_value_size]{0};
+        memset(buf, 0 ,TinyJsonConfig::k_value_size);
         int pStartI = getIndexOf(json, nodePath, index);
         strncpy(buf, json + pStartI, getIndexOf(json, "\t", pStartI) - pStartI);
         
-        std::string s = "/path";
-        s.reserve(128);
-        s += "\t";
-        //if(json[getIndexOf(json, "/path", index) + 7] != '\n') s += path(json);
-        s += buf;
-        s += "\n";
+        sprintf(nodeBuf, "/path\t%s\n", buf);
         
-        memset(buf, 0, 64);
+        memset(buf, 0, TinyJsonConfig::k_value_size);
         getValue(nodePath, json + index, buf);
         
-        s += "/data";
-        s += "\t";
-        s += buf;
-        s += "\n";
-
-        delete[] buf;
-        return s;
+        strcat(nodeBuf, "/data\t");
+        strcat(nodeBuf, buf);
+        strcat(nodeBuf, "\n");
     }
     //#error "Fix the parsing of patch request."
 };

@@ -130,7 +130,7 @@ public:
     void drawBitmap(const uint32_t bitmap[_bitmapW][_bitmapH])
     {
         int s_x = (_width -_bitmapW) / 2;
-        int s_y = _height - _bitmapH;   
+        int s_y = (_height - _bitmapH) / 2;   
         this->drawBitmap<_bitmapW, _bitmapH>(bitmap, s_x, s_y);
     }
 

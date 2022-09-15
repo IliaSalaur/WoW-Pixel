@@ -7,13 +7,14 @@
 #include <ESP8266WebServer.h>
 #include <EEPROM.h>
 #include <FS.h>
+#include <LittleFS.h>
 #include <SimpleJsonArray.h>
 //#include <Arduino_JSON.h>
 
 
-#define EEP_KEY_START 169
-#define EEP_KEY_STOP 21
-#define WAIT_FOT_CONNECTION 15 //seconds
+#define EEP_KEY_START 170
+#define EEP_KEY_STOP 22
+#define WAIT_FOT_CONNECTION 20 //seconds
 
 #define HTML_SIZE 204
 const char* htmlP PROGMEM ="<!DOCTYPE html> <html > <head> <title>WowPixel</title> </head> </body> </html> <script> window.document.onload = redirect(); function redirect() { location.replace(\"/\"); console.log(\"redir\"); } </script>";
@@ -218,9 +219,9 @@ private:
     {
         //WiFi.scanNetworks(true);
         DEBUG("CaptivePortal started")
-        if(!SPIFFS.begin())
+        if(!LittleFS.begin())
         {
-            DEBUG("Spiffs failed");
+            DEBUG("LittleFS failed");
         }
         WiFi.mode(WIFI_AP);
         //apIP = IPAddress(192, 168, 43, 1);
@@ -238,8 +239,8 @@ private:
         webServer->on(String(F("/nets")), std::bind(&SimpleWM::handleNets, this));
         webServer->onNotFound(std::bind(&SimpleWM::handleRoot, this));
         webServer->on(String(F("/connect")), std::bind(&SimpleWM::handleConnect, this));
-        webServer->serveStatic("/", SPIFFS, "/index.html");
-        webServer->serveStatic("/", SPIFFS, "/");
+        webServer->serveStatic("/", LittleFS, "/index.html");
+        webServer->serveStatic("/", LittleFS, "/");
         webServer->begin();
         this->startScan();
     }

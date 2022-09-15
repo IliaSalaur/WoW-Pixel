@@ -12,8 +12,8 @@ private:
 
     void colorsRoutine() {
         hue += _scale;
-        for (int i = 0; i < _w * _h; i++) {
-        _leds[i] = getHSV(hue, 255, 255);
+        for (uint16_t i = 0; i < _w * _h; i++) {
+        setLED(i, getHSV(hue, 255, 255));
     }
 }
 public:

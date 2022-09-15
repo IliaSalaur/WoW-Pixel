@@ -6,8 +6,9 @@
 
 //Fire
 #define NUM_LAYERS 2
-
-#define FIRE_SHOW_PERIOD 50
+#define HUE_MAX 100
+#define HUE_K 2.5
+#define FIRE_SHOW_PERIOD 45
 #define FIRE_SPARKLES 0 //BUG WITH SPARKLES!!!! FIX IT
 
 //Snow
@@ -31,6 +32,8 @@
 
 //Painter
 #define PAINTER_BUFFER_SIZE NUM_LEDS
+
+const uint32_t NULL_COLOR = 0xff000000;
 
 
 #endif

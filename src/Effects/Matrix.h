@@ -13,26 +13,26 @@ private:
     {
       for (int x = 0; x < _w; x++) {
         // заполняем случайно верхнюю строку
-        uint32_t thisColor = _leds[XY(_w, _h, x, 0)];
+        uint32_t thisColor = getLED(XY(_w, _h, x, 0));
         //println(binary(thisColor.getHEX())); -- кусок кода с Processing
         if (thisColor == 0)
         {
           //println("Hex 0");
           if (int(random(-1, _scale)) == 0)
           {
-            _leds[XY(_w, _h, x, 0)] = 65280;
+            setLED(x, 0, 65280);
           } else
           {
-            _leds[XY(_w, _h, x, 0)] = 0;
+            setLED(x, 0, 0);
           }
         } else if (thisColor < 8192)
         {
           //println("Hex < 8192");
-          _leds[XY(_w, _h, x, 0)] = 0;
+          setLED(x, 0, 0);
         } else
         {
           //println("else");
-          _leds[XY(_w, _h, x, 0)] = thisColor - 8192;
+          setLED(x, 0, thisColor - 8192);
         }
       }
 

@@ -24,7 +24,7 @@ public:
             _timer = millis();
             for(int a = 0; a < _leds_num; a++)
             {
-                *(_leds + a) = getHEX(random(255), random(255), random(255));            
+                setLED(a, getHEX(random(255), random(255), random(255)));            
             }
         }
     }

@@ -22,36 +22,37 @@ private:
 
     void _onMsgCb(char* buf) // check path obtained from data that is asigned with a cb 
     {
-        Dln(buf)
+        //Serial.flush();
+        Fm("msgCb buf:%s\n\n", buf)
         for(uint8_t i = 0; i < simplefb_max_callbacks; i++)
         {
-            if(this->_path_callbacks[i].second != NULL)// && this->_path_callbacks[i].first != "")
+            if(this->_path_callbacks[i].second)// && this->_path_callbacks[i].first != "")
             {
-                char value[64];
+                char value[TinyJsonConfig::k_value_size];
                 TinyJson::getValue(this->_path_callbacks[i].first.c_str(), buf, value);
-                if(value[0] != '\2')
+                if(value[0] != TinyJsonConfig::k_fail[0])
                 {
                     //if(this->_path_callbacks[i].first[this->_path_callbacks[i].first.length() - 1] == '/')
                     {
-                        // int index = 0;
-                        // index = TinyJson::getIndexOf(buf, this->_path_callbacks[i].first.c_str(), 0);
-                        // for(size_t i = 0; i != -1; i = TinyJson::getIndexOf(buf, this->_path_callbacks[i].first.c_str(), i))
-                        // {
-                        //     this->_path_callbacks[i].second(TinyJson::getNode(buf, this->_path_callbacks[i].first.c_str()).c_str());
-                        // }
-                        for(size_t i_ = TinyJson::getIndexOf(buf, this->_path_callbacks[i].first.c_str(), 0); i_ != -1; i_ = TinyJson::getIndexOf(buf, this->_path_callbacks[i].first.c_str(), i_+strlen(this->_path_callbacks[i].first.c_str())))
-                        {
-                            Dln(TinyJson::getNode(buf, this->_path_callbacks[i].first.c_str(), i_).c_str())
-                            this->_path_callbacks[i].second(TinyJson::getNode(buf, this->_path_callbacks[i].first.c_str(), i_).c_str());
-
+                        //j = TinyJson::getIndexOf(buf, this->_path_callbacks[i].first.c_str(), 0);
+                        for(int j = TinyJson::getIndexOf(buf, this->_path_callbacks[i].first.c_str(), 0); TinyJson::getIndexOf(buf, this->_path_callbacks[i].first.c_str(), j) > -1; j++)
+                        {                          
+                            auto nodeBuf = std::make_unique<char[]>(TinyJsonConfig::k_node_size);                            
+                            nodeBuf.get()[0] = 0;
+                            TinyJson::getNode(buf, this->_path_callbacks[i].first.c_str(), nodeBuf.get(), j);
+                            
+                            j += this->_path_callbacks[i].first.length();
+                            //Fm("msgCb getNode:%s\nj = %u \t tinyJson = %d\n", nodeBuf.get(), j, TinyJson::getIndexOf(buf, this->_path_callbacks[i].first.c_str(), j))
+                            this->_path_callbacks[i].second(nodeBuf.get());
+                            
                         }
                     }
-                    ///this->_path_callbacks[i].second(TinyJson::getNode(buf, this->_path_callbacks[i].first.c_str()).c_str());
-                    ///if(this->_path_callbacks[i].first[this->_path_callbacks[i].first.length() -1] == '/') i--;
                 }
             }
-            else { Dln(__LINE__) return;}
+            else { Fm("msgCb: Callback not found, i:%u\n", i)}
         }
+
+        Fm("msgCb ended\n")
     }
 
 public:
@@ -88,15 +89,10 @@ public:
         {
             if(_path_callbacks[i].second == NULL)
             {
-                //Dln(uint32_t(cb))
                 _path_callbacks[i].first = path;
                 _path_callbacks[i].second = cb;
                 return;
             }
-            // else if(_path_callbacks[i].first != path)
-            // {
-            //     return;
-            // }
         }
     }
 

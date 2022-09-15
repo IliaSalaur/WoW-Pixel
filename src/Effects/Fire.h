@@ -50,13 +50,18 @@ private:
                     + pcnt * matrixValue[y + 1][newX]) / 100)
                     - valueMask[y][newX];
 
+                    const int hueNow = int(_hueStart * HUE_K + hueMask[y][newX]);
+
                     uint32_t col = getHSV(
-                        int(_hueStart * 2.5 + hueMask[y][newX]), // H
+                        hueNow < HUE_MAX ? hueNow : HUE_MAX, // H
                         255, // S
-                    (int)max(0, nextv) // V
+                        max(0, nextv) // V
                     );
 
-                    _leds[XY(_w, _h, x, y)] = col;
+                    col &= 0xffa000;//filter blue color
+                    //if((col>>16) < 0xa0 && ((col>>8) & 0x00ff) > 0x90) col &= 0xff6000;
+
+                   setLED(XY(_w, _h, x, y + _h - 8), col);
                 }                    
             }
         }
@@ -70,7 +75,7 @@ private:
                 255, // S
                 (int)(((100 - pcnt) * matrixValue[_h - 1][newX] + pcnt * line[newX]) / 100) // V
             );
-            _leds[XY(_w, _h, newX, _h - 1)] = col;
+            setLED(XY(_w, _h, newX, _h - 1), col);
         }
     }
 

@@ -15,7 +15,7 @@ private:
         for (uint8_t j = 0; j < _h; j++) {
             uint32_t thisColor = getHSV(hue + j * _scale, 255, 255);
             for (uint8_t i = 0; i < _w; i++){
-                _leds[XY(_w, _h, i, j)] = thisColor;
+                setLED(i, j, thisColor);
             }
         }
     }
@@ -50,7 +50,7 @@ private:
         for (uint8_t i = 0; i < _w; i++) {
             uint32_t thisColor = getHSV((hue + i * _scale), 255, 255);
             for (uint8_t j = 0; j < _h; j++){
-                _leds[XY(_w, _h, i, j)] = thisColor;   //leds[getPixelNumber(i, j)] = thisColor;
+                setLED(i, j, thisColor);   //leds[getPixelNumber(i, j)] = thisColor;
             }
         }
     }

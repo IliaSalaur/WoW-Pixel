@@ -4,11 +4,12 @@
 
 #include "IEffect.h"
 #include <Fonts.h>
+#include <string>
 
 class Text : public IEffect   
 {
 private:
-    String text = String(" ");
+    std::string text = " ";
     uint16_t _speed =  TEXT_SPEED;
     bool _onlyDigits = 0;
     int _runX = 0;
@@ -22,7 +23,7 @@ private:
     {
         if(x < _w && y < _h)
         {
-            _leds[XY(_w, _h, x, y)] = col;                  
+            setLED(XY(_w, _h, x, y), col);                  
         }
     }
 
@@ -60,7 +61,7 @@ private:
     {
         for(int i = 0; i < _w * _h; i++)
         {
-            _leds[i] = _backCol;
+            setLED(i, _backCol);
         }  
         
         int lastX = 0;
@@ -79,7 +80,7 @@ private:
             if(charIndex >= 208)
             {
                 charIndex <<= 8;
-                charIndex |= text.charAt(i + 1);                
+                charIndex |= text[i + 1];                
                 i++;
             }
             chars[j] = charIndex;
@@ -91,40 +92,12 @@ private:
             //lastX += (smallSpace) ? 4:6;
             lastX += (i + 1 < len && (chars[i] >= 48 && chars[i] <= 57) && (text[i + 1] >= 48 && text[i + 1] <= 57)) ? 4:6;
         }
-        
-        /*
-        for(uint16_t i = 0, j = 0; i < len; i++, j++)
-        {
-            int charIndex = text.charAt(i);
-            if(1)
-            {
-                bool rusChar = 0;
-                bool smallSpace = 0;
-                if(charIndex >= 208)
-                {
-                    charIndex <<= 8;
-                    charIndex |= text.charAt(i + 1);
-                    rusChar = 1;
-                }
-
-                if(i + 1 < len)
-                {
-                    if((charIndex >= 48 && charIndex <= 57) && (text[i + 1] >= 48 && text[i + 1] <= 57))
-                    {
-                        smallSpace = 1;
-                    }
-                }
-                
-                _drawLetter(charIndex, lastX + _runX, _y, 5*7);//3*5:5*7
-                lastX += (smallSpace) ? 4:6;
-                i += (rusChar) ? 1 : 0;
-            }
-        }*/
     }
 
     void _centerText()
     {
-        if(text != String(" ") && _scrollTimes == 0)
+        _y = (_h - 7) / 2 - _onlyDigits;        
+        if(text != " " && _scrollTimes == 0)
         {
             _runX = (_w - int(text.length()) * ((_onlyDigits) ? 4:5)) / 2;//1:2
             DEBUG(String("_runX setted: ") + String(_runX))
@@ -136,10 +109,11 @@ private:
             DEBUG(text)
             DEBUG(_scrollTimes)
         }
+        Fm("w:%u, h:%u, x:%u, y:%u\n", _w, _h, _runX, _y)
     }
 
 public:
-    Text(uint32_t* leds, uint8_t w, uint8_t h, uint16_t speed = 0, int scrollTimes = 0, String t = "", uint32_t lcol = uint32_t(0xffffff), uint32_t bcol = uint32_t(0))
+    Text(uint32_t* leds, uint8_t w, uint8_t h, uint16_t speed = 0, int scrollTimes = 0, std::string t=" ", uint32_t lcol = uint32_t(0xffffff), uint32_t bcol = uint32_t(0))
     {
         _leds = leds;
         _w = w;
@@ -184,7 +158,6 @@ public:
             {
                 if(millis() - timer >= _speed && _speed != 0)
                 {
-                    //DEBUG("MOVE start")
                     timer = millis();
                     if(_runX <= int(text.length()) * -5)
                     {
@@ -196,25 +169,23 @@ public:
                     {
                         _runX--;
                     }
-                    //DEBUG(_runX);
-                    //DEBUG(_scrollCount);
-                    //DEBUG(_scrollTimes);
-                    //DEBUG("MOVE stop")
                 }
             }                        
             this->_drawText();
         }
     }
 
-    void setText(String t)
+    void setText(std::string& t)
     {
+        this->setText(t.c_str());
+    }
+
+    void setText(const char* t){
         text = t;
-        int len = strlen(text.c_str());
-        DEBUG(len);
+        DEBUG(text.length());
         _scrollCount = (_scrollCount == _scrollTimes) ? 0 : _scrollCount;
         this->_centerText();
         this->setScrollTimes(_scrollTimes);
-
     }
 
     void setY(uint8_t y)
@@ -243,11 +214,6 @@ public:
         _scrollTimes = n;
 
         this->_centerText();
-    }
-
-    ~Text()
-    {
-        text.~String();
     }
 };
 

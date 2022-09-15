@@ -11,8 +11,11 @@
 
 #define USE_WM
 
+const uint8_t WIDTH = 16;
+const uint8_t HEIGHT = 16;
+
 SimpleFirebase fb(DATABASE_URL, API_KEY);
-SimpleLED<16, 8, D2> matrix;
+SimpleLED<WIDTH, HEIGHT, D2> matrix;
 
 std::shared_ptr<Text> text(new Text());
 std::shared_ptr<Text> digits(new Text());
@@ -21,8 +24,7 @@ std::shared_ptr<Painter> painter(new Painter());
 void caseCallback(const char* data)
 {
   int caseNum = atoi(TinyJson::value(data).c_str());
-  DEBUG(data)
-  DEBUG(caseNum)
+  Fm("caseNum: %u, data:%s\n", caseNum, data);
   switch(caseNum)
   {
   case 0:
@@ -45,14 +47,14 @@ void caseCallback(const char* data)
 
 void drawCallback(const char* data)
 {
-  int ledNum = atoi(TinyJson::path(data).c_str() + 11);
+  int ledNum = atoi(TinyJson::path(data).c_str() + 9);
+  //Fm("CB ledNum:%d\tpath: %s\n", ledNum, TinyJson::value(data).c_str());
   painter->draw(ledNum, TinyJson::value(data).c_str());
-  DEBUG(String("DrawCallback: ") + String(ledNum)/* + String(" ") + String(colHex)*/)
 }
 
 void initFB()
 {
-  fb.on("/Matrix/Led", drawCallback);
+  fb.on("/Matrix/l", drawCallback);
   fb.on("/Control/Text/Text", [](const char* data){text->setText(TinyJson::value(data).c_str());});
   fb.on("/Control/Text/Scroll", [](const char* data){text->setScrollTimes(atoi(TinyJson::value(data).c_str()));});
   fb.on("/Case/Case", caseCallback);
@@ -62,7 +64,7 @@ void initFB()
   fb.on("/Control/Digits/Color", [](const char* data){digits->setLetterColor(strtoul(TinyJson::value(data).c_str() + 1, NULL, 16));});
   fb.on("/Control/Digits/BackColor", [](const char* data){digits->setBackgroundColor(strtoul(TinyJson::value(data).c_str() + 1, NULL, 16));});
   fb.on("/Control/Digits/Text", [](const char* data){digits->setText(TinyJson::value(data).c_str());});
-  Serial.printf("Connect%s", fb.begin() ? "ed":"ion failed");
+  Serial.printf("Connect%s\n\n", fb.begin() ? "ed":"ion failed");
   fb.beginStream(PATH);
   fb.getClient().onDisconnect(initFB);
 }
@@ -95,7 +97,7 @@ void initWiFi()
 void initMatrix()
 {
   matrix.begin();
-  delay(700);
+  delay(100);
   matrix.drawBitmap<8, 8>(monsterBitmap);
   delay(2000);
 }
@@ -107,7 +109,6 @@ void setup()
   Serial.begin(115200);
   Serial.setTimeout(20);
   delay(50);
-  DEBUG("Serial setuped ")
   
 
   randomSeed(micros());
@@ -122,11 +123,21 @@ void setup()
 
 void loop()
 {
+  static bool flag = 0;
   matrix.handle(); 
   fb.handle();
   if(Serial.available() && Serial.read() == 'd')
   {
     WiFi.reconnect();
+  }
+
+  if(!WiFi.isConnected() && !flag){
+    Fm("WIFI DISCONNECTED\n");
+    flag = 1;
+  }
+  if(WiFi.isConnected() && flag){
+    Fm("WIFI CONNECTED\n");
+    flag = 0;
   }
 }
 

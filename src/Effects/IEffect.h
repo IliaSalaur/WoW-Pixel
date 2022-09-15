@@ -42,7 +42,33 @@ public:
     {
         _w = w;
         _h = h;
+        _leds_num = w * h;
     }
+
+    void setLED(uint16_t led, uint32_t col){
+        if(_leds == nullptr) return;
+        if(led >= _w * _h) return;
+        _leds[led] = col;
+    }
+
+    void setLED(uint8_t x, uint8_t y, uint32_t col){
+        if(_leds == nullptr) return;
+        if(x > _w || y > _h) return;
+        _leds[XY(_w, _h, x, y)] = col;
+    }
+
+    uint32_t getLED(uint16_t led){
+        if(_leds == nullptr) return NULL_COLOR;
+        if(led >= _w * _h) return NULL_COLOR;
+        return _leds[led];
+    }
+
+    uint32_t getLED(uint8_t x, uint8_t y){
+        if(_leds == nullptr) return NULL_COLOR;
+        if(x > _w || y > _h) return NULL_COLOR;
+        return _leds[XY(_w, _h, x, y)];
+    }
+
 };
 
 

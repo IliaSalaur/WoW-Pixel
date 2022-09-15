@@ -6,13 +6,13 @@
 class Painter : public IEffect
 {
 private:
-    uint32_t buffer[128];
+    uint32_t buffer[256];
 
     void _setBuf()
     {
         for(int i = 0; i < _w * _h; i++)
         {
-            _leds[i] = buffer[i];
+            setLED(i, buffer[i]);
         }
     }
 public:
@@ -35,9 +35,9 @@ public:
         buffer[n] = col;
     }
 
-    void draw(int n, String colS)
+    void draw(int n, const char* colS)
     {
-        uint32_t col = strtoul(colS.substring(1).c_str(), NULL, 16);
+        uint32_t col = strtoul(colS + 1, NULL, 16);
         this->draw(n, col);
     }
 

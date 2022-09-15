@@ -56,7 +56,7 @@ private:
           lightersPos[1][i] = (_w - 1) * ((_w / _h == 1) ? 10 : 5);//10
           lightersSpeed[1][i] = -lightersSpeed[1][i];
         }
-        _leds[XY(_w, _h, lightersPos[0][i] / ((_w / _h == 1) ? 10 : 5)/*10*/, lightersPos[1][i] / 10)] =  lightersColor[i];
+        setLED(XY(_w, _h, lightersPos[0][i] / ((_w / _h == 1) ? 10 : 5)/*10*/, lightersPos[1][i] / 10), lightersColor[i]);
       }
     }  
 

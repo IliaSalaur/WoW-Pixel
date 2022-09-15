@@ -14,17 +14,17 @@ private:
       int testf = 0;
       for (int x = 0; x < _w; x++) {
         for (int y = _h - 1; y > testf; y--) {
-          _leds[XY(_w, _h, x, y)] = _leds[XY(_w, _h, x, y - 1)];
+          setLED(x, y, getLED(x, y - 1));
         }
       }
 
       for (uint8_t x = 0; x < _w; x++) {
         // заполняем случайно верхнюю строку
         // а также не даём двум блокам по вертикали вместе быть
-        if (getHEX(_leds[XY(_w, _h, x, _h - 2)]) == 0 && (random(0, _scale) == 0))
-          _leds[XY(_w, _h, x, testf)] = getHEX(14745599 - 1052688 * random(0, 4));
+        if (getHEX(getLED(XY(_w, _h, x, _h - 2))) == 0 && (random(0, _scale) == 0))
+          setLED(XY(_w, _h, x, testf), getHEX(14745599 - 1052688 * random(0, 4)));
         else
-          _leds[XY(_w, _h, x, testf)] = getHEX(0);
+          setLED(XY(_w, _h, x, testf), getHEX(0));
       }
     }
 
