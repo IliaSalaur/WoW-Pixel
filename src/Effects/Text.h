@@ -96,7 +96,8 @@ private:
 
     void _centerText()
     {
-        _y = (_h - 7) / 2 - _onlyDigits;        
+        _y = (_h - 7) / 2;
+        _y -= _y > 0 ? _onlyDigits : 0;
         if(text != " " && _scrollTimes == 0)
         {
             _runX = (_w - int(text.length()) * ((_onlyDigits) ? 4:5)) / 2;//1:2
