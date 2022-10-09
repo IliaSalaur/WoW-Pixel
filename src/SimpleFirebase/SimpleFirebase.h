@@ -5,25 +5,30 @@
 #include "FirebaseClient.h"
 #include <utility>
 #include <string>
+#include "StatePersistence.h"
 
 static const uint8_t simplefb_max_callbacks = 12;
+static const size_t simplefb_persist_buf_size = 704;
+static const uint8_t simplefb_persist_max_entries = 12;
 
 class SimpleFirebase
 {
 private:
     static SimpleFirebase* pSingletonInstance;
     FirebaseClient* _client;
+    IStatePersist* _statePersist;
     std::pair<std::string, std::function<void(const char*)>> _path_callbacks[simplefb_max_callbacks];
+    std::pair<std::string, std::string> _persistEntries[simplefb_persist_max_entries];
 
     void _onDisconnect()
     {
 
     }
 
-    void _onMsgCb(char* buf) // check path obtained from data that is asigned with a cb 
+    void _executeAsignedCallbacks(char* buf) // check path obtained from data that is asigned with a cb
     {
         //Serial.flush();
-        Fm("msgCb buf:%s\n\n", buf)
+        //Fm("msgCb buf:%s\n\n", buf)
         for(uint8_t i = 0; i < simplefb_max_callbacks; i++)
         {
             if(this->_path_callbacks[i].second)// && this->_path_callbacks[i].first != "")
@@ -55,13 +60,56 @@ private:
         Fm("msgCb ended\n")
     }
 
+    void _onMsgCb(char* buf) 
+    {
+        _persistData(buf);
+        _executeAsignedCallbacks(buf);
+    }    
+
+    void _persistData(const char* buf){
+        if(strlen(buf) < 2) return;
+        std::string entriesBuf = "";
+        entriesBuf.reserve(k_max_posible_rtcmem_size);
+        for(size_t i = 0; i < simplefb_persist_max_entries; i++)
+        {
+            if(_persistEntries[i].first == "") continue;
+            if(TinyJson::getIndexOf(buf, _persistEntries[i].first.c_str()) != -1)
+            {
+                char nodeBuf[TinyJsonConfig::k_node_size]{0};
+                TinyJson::getNode(buf, _persistEntries[i].first.c_str(), nodeBuf);
+                _persistEntries[i].second = TinyJson::value(nodeBuf);
+                Fm("Entry to be persisted:%s\n", _persistEntries[i].first.c_str())                    
+            }
+
+            if(_persistEntries[i].second != "")
+            {
+                entriesBuf += _persistEntries[i].first;
+                entriesBuf += "\t";
+                entriesBuf += _persistEntries[i].second;
+                entriesBuf += "\n";
+            }                
+        }
+        Fm("All entries: %s\nSize:%u\n", entriesBuf.c_str(), entriesBuf.size() + 1)
+        _statePersist->persist(entriesBuf.c_str(), entriesBuf.size() + 1);
+    }
+
 public:
     static void onMsgCb(char* s)
     {
         if(pSingletonInstance) pSingletonInstance->_onMsgCb(s);
     }
 
-    SimpleFirebase(const char* host, const char* token) :  _client(new FirebaseClientImpl(host, token)) // initializing the client
+    bool retrievePersistedState()
+    {
+        char buf[simplefb_persist_buf_size]{0};
+        size_t dataSize = _statePersist->getPersistedData(buf);             
+        if(dataSize >= k_max_posible_rtcmem_size) return false;
+        Fm("Persist data: %s\nData size:%u\n", buf, dataSize);   
+        _executeAsignedCallbacks(buf);
+        return true;
+    }
+
+    SimpleFirebase(const char* host, const char* token) :  _client(new FirebaseClientImpl(host, token)), _statePersist(new RTCStatePersist) // initializing the client
     {
         pSingletonInstance = this;
         for(size_t i = 0; i < simplefb_max_callbacks; i++)
@@ -69,11 +117,32 @@ public:
             _path_callbacks[i].first = "";
             //_path_callbacks[i].second;
         }
+
+        for(size_t i = 0; i < simplefb_persist_max_entries; i++)
+        {
+            _persistEntries[i].first = "";
+            _persistEntries[i].second = "";
+        }
+    }
+
+    SimpleFirebase(const char* host, const char* token, IStatePersist* statePersist) :  _client(new FirebaseClientImpl(host, token)), _statePersist(statePersist) // initializing the client
+    {
+        pSingletonInstance = this;
+        for(size_t i = 0; i < simplefb_max_callbacks; i++)
+        {
+            _path_callbacks[i].first = "";
+            //_path_callbacks[i].second;
+        }
+
+        for(size_t i = 0; i < simplefb_persist_max_entries; i++)
+        {
+            _persistEntries[i].first = "";
+            _persistEntries[i].second = "";
+        }
     }
 
     bool begin()
-    {
-        //_client.reset();
+    {        
         _client->onReceive(SimpleFirebase::onMsgCb);
         return _client->begin();
     }
@@ -104,6 +173,20 @@ public:
     void requestData(const char* path)
     {
         _client->requestData(path);
+    }
+
+    // @param entry path to data in RTDB to be persisted
+    void persistEntry(const char* entry)
+    {
+        for(size_t i = 0; i < simplefb_persist_max_entries; i++)
+        {
+            if(_persistEntries[i].first == entry) return; //already persisting
+            if(_persistEntries[i].first == ""){                
+                _persistEntries[i].first = entry;
+                Fm("Entry persist requeired: %s\n", _persistEntries[i].first.c_str());
+                return;
+            }
+        }
     }
     
     FirebaseClient& getClient()

@@ -6,6 +6,7 @@
 #include <WiFiClientSecureBearSSL.h>
 #include "TinyJsonFinal.h"
 #include <memory>
+#include <string>
 
 static const uint16_t bearssl_client_reconnect_timeout = 20000;
 static const uint32_t bearssl_client_keepalive_timeout = 45000;
@@ -38,18 +39,38 @@ class FirebaseClientImpl : public FirebaseClient
 {
 private:
     bool _reconnecting;
-    WiFiClientSecure* _client;
+    std::string _lastPath;
+    //std::unique_ptr<WiFiClientSecure> _client;
+    WiFiClientSecure _client;
+
+    void _handleDisconnect(){
+        Fm("Reconnect start, free heap: %u\t free stack: %u\n", ESP.getFreeHeap(), ESP.getFreeContStack())
+        //_client.reset(new WiFiClientSecure);
+        _client.stop();
+        _client.setInsecure();
+        _client.setNoDelay(true);
+        _client.setTimeout(bearssl_client_timeout);
+        bool con = _client.connect(_host, 443);
+        _reconnecting = !con;
+        Fm("Reconnect%s\n", con ? "ed success" : " failed")
+        Fm("Reconnect end, free heap: %u\t free stack: %u\n", ESP.getFreeHeap(), ESP.getFreeContStack())
+        this->beginStream(_lastPath.c_str());
+    }
+
 public:
-    FirebaseClientImpl(const char* host, const char* token) : FirebaseClient(host, token), _reconnecting(false), _client(new WiFiClientSecure){}
+    FirebaseClientImpl(const char* host, const char* token) : FirebaseClient(host, token), _reconnecting(false), _lastPath(""), _client(){}
 
     bool begin()
     {
         Fm("Host: %s\nToken: %s\n", _host, _token)
-        _client->stop();
-        _client->setInsecure();
-        _client->setNoDelay(true);
-        _client->setTimeout(bearssl_client_timeout);
-        return _client->connect(_host, 443);
+        Fm("Begin start, free heap: %u\t free stack: %u\n", ESP.getFreeHeap(), ESP.getFreeContStack())
+        //_client.reset(new WiFiClientSecure);
+        _client.stop();
+        _client.setInsecure();
+        _client.setNoDelay(true);
+        _client.setTimeout(bearssl_client_timeout);
+        bool con = _client.connect(_host, 443);        
+        return con;
     }
 
     bool beginStream(const char* path) override
@@ -64,10 +85,12 @@ public:
         strcat(h, _host);
         strcat(h, "\r\n");
 
-        _client->print(s); //GET request with auth
-        _client->print(h); //Host header
-        _client->print("Accept: text/event-stream\r\n");
-        _client->print("Connection: keep-alive\r\n\r\n");
+        _client.print(s); //GET request with auth
+        _client.print(h); //Host header
+        _client.print("Accept: text/event-stream\r\n");
+        _client.print("Connection: keep-alive\r\n\r\n");
+        
+        _lastPath = path;
 
         return true; // hard code, should return real state of stream begining
     }
@@ -76,23 +99,25 @@ public:
     {
         static uint32_t _reconnectTimer = millis();
         static uint32_t _lastKeepAlive = millis();
-        if((!_client->connected() || _reconnecting) && millis() - _reconnectTimer > bearssl_client_reconnect_timeout)
+
+        if((!_client.connected() || _reconnecting) && millis() - _reconnectTimer > bearssl_client_reconnect_timeout)
         {
             _reconnectTimer = millis();
             _reconnecting = 0;
-            if(_onDisconnectCallback) _onDisconnectCallback();
+            //if(_onDisconnectCallback) _onDisconnectCallback();
+            this->_handleDisconnect();
         }
 
-        if(_client->available())
+        if(_client.available())
         {
             _lastKeepAlive = millis();
-
+            _reconnecting = 0;
             auto buf = std::make_unique<char[]>(bearssl_client_buffersize);
             buf.get()[0] = 0;
-            _client->readBytesUntil('\n', buf.get(), bearssl_client_buffersize);
+            _client.readBytesUntil('\n', buf.get(), bearssl_client_buffersize);
             if(TinyJson::getIndexOf(buf.get(), "data") == 0)
             {
-                Fm("handle buf.get():\n%s\n\n", buf.get())
+                //Fm("handle buf.get():\n%s\n\n", buf.get())
                 const uint16_t bufSize = strlen(buf.get());
                 Fm("buf size:%u\n\n", bufSize)
                 auto json = std::make_unique<char[]>(bearssl_client_json_size);
@@ -105,6 +130,7 @@ public:
                 }
                 TinyJson::createJson(buf.get() + 6, json.get(), bearssl_client_json_size, initialPath);
                 Fm("json size:%u\n", strlen(json.get()))
+                //Fm("msgCb buf:%s\n\n", json.get())
                 if(_onMessageCallback)_onMessageCallback(json.get());
             }
         }
@@ -136,10 +162,10 @@ public:
         strcat(h, _host);
         strcat(h, "\r\n");
 
-        _client->print(s); //GET request with auth
-        _client->print(h); //Host header
-        _client->print("Accept: application/\r\n");
-        _client->print("Connection: keep-alive\r\n\r\n");
+        _client.print(s); //GET request with auth
+        _client.print(h); //Host header
+        _client.print("Accept: application/\r\n");
+        _client.print("Connection: keep-alive\r\n\r\n");
     }
     
 

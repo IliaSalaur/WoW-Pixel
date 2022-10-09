@@ -9,6 +9,7 @@
 #include <FS.h>
 #include <LittleFS.h>
 #include <SimpleJsonArray.h>
+#include <functional>
 //#include <Arduino_JSON.h>
 
 
@@ -68,6 +69,7 @@ private:
     std::unique_ptr<DNSServer> dnsServer;
     std::unique_ptr<ESP8266WebServer> webServer;
 
+    std::function<void()> whileConnectingCB;
     SimpleJsonArray _nets;
 
     void(*funcPtr)() = nullptr;
@@ -171,22 +173,29 @@ private:
 
         while(1)
         {
-            Serial.print("~"); delay(300);
-            if(WiFi.isConnected())
+            static uint32_t tmr = 0;
+            if(millis() - tmr >= 500)
             {
-                connected = 1;
-                saveEEPROM(conf);
-                Serial.println(WiFi.localIP());
-                if( funcPtr)  funcPtr();
-                break;
-            }
-            else if(millis() - _startTimer >= WAIT_FOT_CONNECTION * 1000)
-            {
-                DEBUG("Bad credentials, reset")
-                connected = 0;
-                startCaptivePortal(AP_NAME, AP_PASS);
-                break;
-            }
+                Serial.print("~");
+                tmr = millis();
+                if(WiFi.isConnected())
+                {
+                    connected = 1;
+                    saveEEPROM(conf);
+                    Serial.println(WiFi.localIP());
+                    if( funcPtr)  funcPtr();
+                    break;
+                }
+                else if(millis() - _startTimer >= WAIT_FOT_CONNECTION * 1000)
+                {
+                    DEBUG("Bad credentials, reset")
+                    connected = 0;
+                    startCaptivePortal(AP_NAME, AP_PASS);
+                    break;
+                }
+            }       
+            delay(1);                 
+            if(whileConnectingCB) whileConnectingCB();
         }        
     }
 
@@ -271,9 +280,10 @@ public:
         }
         
         while(!connected)
-        {
+        {            
             this->handle();
             yield();
+            if(whileConnectingCB) whileConnectingCB();
         }
     }
 
@@ -290,6 +300,11 @@ public:
             scanTimer = millis();
             this->startScan();
         }
+    }
+
+    void whileConnecting(void(*cb)())
+    {
+        whileConnectingCB = cb;
     }
 
     bool getState()

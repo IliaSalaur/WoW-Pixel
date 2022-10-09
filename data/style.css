@@ -19,7 +19,8 @@ body{
     border: 1px solid transparent;
     width: 90%;
     border-radius: 30px;
-    background-image: url(back.png);
+    background: rgb(87, 23, 170);
+    /* background: url(back.png); */
     background-size: 150%;
 }
 
